@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff AI/ML Interview Curriculum — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:760px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                max-width:36rem; margin:0 auto 2.5rem; }
+    .phase { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+             box-shadow:var(--raised); padding:1.5rem 1.75rem; margin-bottom:1.75rem; }
+    .phase h2 { font-size:1.55rem; color:var(--accent-deep); margin:0 0 .25rem; }
+    .phase .tagline { color:var(--ink-soft); font-style:italic; margin:0 0 1.25rem; font-size:1.08rem; }
+    .node { border-top:1px solid var(--line); padding:.9rem 0; }
+    .node:first-of-type { border-top:none; padding-top:.25rem; }
+    .node-head { display:flex; align-items:baseline; gap:.6rem; flex-wrap:wrap; }
+    .node-title { font-weight:700; font-size:1.15rem; }
+    .node-title a { color:var(--ink); text-decoration:none; border-bottom:2px solid var(--accent); }
+    .node-title a:hover { color:var(--accent-deep); }
+    .status { display:inline-block; font-size:.9rem; padding:.1rem .65rem; border-radius:999px;
+              border:1px solid var(--line); white-space:nowrap; }
+    .status.done { background:var(--accent); border-color:var(--accent); color:#fffdf9; }
+    .status.planned { background:#efe6d6; color:var(--ink-soft); }
+    .node p { margin:.35rem 0 0; color:var(--ink-soft); font-size:1.08rem; }
+    .node p .q { color:var(--ink); font-style:italic; }
+    .progress { text-align:center; color:var(--ink-soft); margin:2.5rem 0 1rem; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:1rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="index.html">← The Infra Notebook</a></p>
+    <p class="dateline">The series roadmap · started Monday, September 28, 2026</p>
+    <h1>Staff AI/ML Interview Curriculum</h1>
+    <p class="subtitle">The full map for a Staff AI/ML engineer loop — from your own background to
+    pretraining, post-training, inference engineering, and the system-design rounds. The twice-daily
+    lessons walk this map node by node; each lesson links back here, and each node below links
+    forward to its lesson as it's written.</p>
+
+    <div class="phase">
+      <h2>Phase 0 — Your resume, translated to LLM-staff fluency</h2>
+      <p class="tagline">You don't need to hide a classical-ML and leadership background. You need a
+      translation layer: every strength you already have, restated in LLM vocabulary.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">Classical ML → LLM translation layer</span>
+          <span class="status planned">Planned</span></div>
+        <p>Loss design and regularization are the same muscles as KL penalties and reward shaping;
+        bias–variance thinking becomes scaling-law reasoning. Answers
+        <span class="q">"your background is classical ML — how does it carry over to training LLMs?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Bayesian roots → reward modeling &amp; uncertainty</span>
+          <span class="status planned">Planned</span></div>
+        <p>Your Bayesian publications are directly relevant: reward models are learned preference
+        distributions, and calibrated uncertainty over LLM outputs is a live Staff-level problem. Answers
+        <span class="q">"how do you quantify uncertainty in a model's outputs?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Experimentation &amp; metrics → eval harnesses</span>
+          <span class="status planned">Planned</span></div>
+        <p>The cost-minimization triage work is the same instinct as eval-harness design and guardrail
+        metrics: decide what "better" means before you optimize. Answers
+        <span class="q">"how do you know a new model is actually better?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Leading 4× growth → Staff narratives</span>
+          <span class="status planned">Planned</span></div>
+        <p>TikTok Live leadership — strategy, roadmapping, hiring, VP-level reporting — is the raw
+        material for the behavioral bar and the system-design rounds. Answers
+        <span class="q">"tell me about a hard technical decision you drove."</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 1 — Pretraining at scale</h2>
+      <p class="tagline">What happens before the model knows anything, and why the infra looks the way it does.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">Tokenization &amp; data pipelines</span>
+          <span class="status planned">Planned</span></div>
+        <p>BPE, packing, dataloaders — the unglamorous plumbing that decides throughput before a single
+        flop. Staff angle: <span class="q">"why is your training job data-starved?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Scaling laws (Chinchilla)</span>
+          <span class="status planned">Planned</span></div>
+        <p>Compute-optimal training as a budgeting tool: how many tokens per parameter, and what it
+        costs to be wrong. Staff angle: <span class="q">"how would you size a pretraining run?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Optimizers: AdamW &amp; Muon</span>
+          <span class="status planned">Planned</span></div>
+        <p>Why AdamW is the default, where Muon changes the memory math, and what the optimizer state
+        costs you at scale. Staff angle: <span class="q">"what dominates memory in your trainer?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Mixed precision: FP16 / BF16 / FP8</span>
+          <span class="status planned">Planned</span></div>
+        <p>Loss scaling, underflow, and why FP8 is a numerics project before it's a speedup. Staff angle:
+        <span class="q">"your FP8 run diverged — walk me through the debug."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Distributed training: the four parallelisms + the fabric</span>
+          <span class="status done">Done</span></div>
+        <p>Ring all-reduce, ZeRO/FSDP sharding, tensor and pipeline parallelism, and
+        <a href="posts/2026-09-28-nvlink-infiniband-nccl.html">the NVLink/InfiniBand/NCCL fabric</a>
+        underneath it all. Staff angle: <span class="q">"where does scaling efficiency actually go?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Large-batch training &amp; LR scaling</span>
+          <span class="status planned">Planned</span></div>
+        <p>Gradient accumulation, the linear scaling rule and its limits, and batch-size effects on
+        generalization. Staff angle: <span class="q">"how big can you push the batch before it hurts?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Activation memory: gradient checkpointing</span>
+          <span class="status planned">Planned</span></div>
+        <p>Trading recompute for memory — the 30% rule of thumb and when it breaks. Staff angle:
+        <span class="q">"you're OOM at 128k context — what do you change first?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">FSDP2 &amp; async tensor parallelism</span>
+          <span class="status planned">Planned</span></div>
+        <p>Modern torchtitan patterns: DTensor sharding and overlapping comms with compute. Staff angle:
+        <span class="q">"how do you hide all-reduce behind matmuls?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Fault tolerance: checkpointing &amp; elastic training</span>
+          <span class="status planned">Planned</span></div>
+        <p>Checkpoint cadence math, failure rates at 10k GPUs, and restarting without losing the run.
+        Staff angle: <span class="q">"your cluster loses a node a day — design the recovery."</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 2 — Post-training: SFT → RL</h2>
+      <p class="tagline">Turning a document-completer into an assistant, then into something that reasons.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title"><a href="posts/2026-09-28-sft-instruction-tuning.html">SFT mechanics: instruction tuning, chat templates, loss masking</a></span>
+          <span class="status done">Done</span></div>
+        <p>Loss only on response tokens; the template must match at inference. Staff angle:
+        <span class="q">"why did fine-tuning make your model worse?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">SFT data: curation, quality vs quantity, decontamination</span>
+          <span class="status planned">Planned</span></div>
+        <p>LIMA's lesson, data mixing, and why contaminated evals lie to you. Staff angle:
+        <span class="q">"how do you build a fine-tuning dataset you trust?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">RLHF pipeline: SFT → reward model → policy optimization</span>
+          <span class="status planned">Planned</span></div>
+        <p>The three-stage pipeline and why each stage exists. Staff angle:
+        <span class="q">"why can't you RLHF straight from the base model?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Reward modeling: Bradley–Terry, reward hacking</span>
+          <span class="status planned">Planned</span></div>
+        <p>Preference data → scalar reward; Goodhart's law as an engineering problem. Staff angle:
+        <span class="q">"your reward model is being gamed — how do you tell?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">DPO &amp; ORPO: the RL-free derivation</span>
+          <span class="status planned">Planned</span></div>
+        <p>The closed-form optimal policy trick that skips the RL entirely. Staff angle:
+        <span class="q">"when would you choose DPO over PPO?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">PPO: clipped objective, KL penalty, value head</span>
+          <span class="status planned">Planned</span></div>
+        <p>The trust-region intuition, why the KL term matters, and PPO's failure modes on LLMs.
+        Staff angle: <span class="q">"why is PPO so finicky for language models?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">GRPO &amp; RLOO: group baselines</span>
+          <span class="status planned">Planned</span></div>
+        <p>Dropping the value head: baselines from the rollout group itself. Staff angle:
+        <span class="q">"what does the value network buy you, and what does it cost?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">RLVR: verifiable rewards &amp; reasoning</span>
+          <span class="status planned">Planned</span></div>
+        <p>When the reward is checkable (math, code), RL teaches reasoning — not just style. Staff angle:
+        <span class="q">"why did RL on verifiable tasks unlock reasoning?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">RL infra: rollout workers, async generation, vLLM in the loop</span>
+          <span class="status planned">Planned</span></div>
+        <p>Generation-bound training: the serving system inside the training loop. Staff angle:
+        <span class="q">"your RL run is bottlenecked on rollouts — fix it."</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 3 — Inference engineering</h2>
+      <p class="tagline">Serving tokens cheaply and fast: where Meta-scale systems thinking lives.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">KV cache</span>
+          <span class="status done">Done</span></div>
+        <p>The memory tax on every generated token — and the first thing to optimize. Staff angle:
+        <span class="q">"how much memory does a 128k-context request need?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Continuous batching</span>
+          <span class="status done">Done</span></div>
+        <p>Iteration-level scheduling: why static batching wastes GPUs. Staff angle:
+        <span class="q">"how do you keep utilization high with mixed request lengths?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Paged attention &amp; prefix caching</span>
+          <span class="status planned">Planned</span></div>
+        <p>Virtual memory for KV cache; sharing prefixes across requests. Staff angle:
+        <span class="q">"how do you serve a million near-identical system prompts?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Quantization for serving</span>
+          <span class="status done">Done</span></div>
+        <p>INT8/INT4 weights and KV cache: what breaks and how to measure it. Staff angle:
+        <span class="q">"your quantized model regressed 2% — ship it?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Speculative decoding</span>
+          <span class="status planned">Planned</span></div>
+        <p>Draft-then-verify: free latency when the small model agrees. Staff angle:
+        <span class="q">"when does speculation stop paying off?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Disaggregated prefill / decode</span>
+          <span class="status planned">Planned</span></div>
+        <p>Splitting the two phases onto different hardware for independent scaling. Staff angle:
+        <span class="q">"TTFT and TPOT have different SLOs — design for both."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">MoE inference: expert parallelism in serving</span>
+          <span class="status planned">Planned</span></div>
+        <p>Sparse activation means sparse memory traffic — and brutal load-balancing problems. Staff angle:
+        <span class="q">"one expert is hot — what happens to tail latency?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Serving stacks: vLLM, SGLang, TensorRT-LLM</span>
+          <span class="status planned">Planned</span></div>
+        <p>What each stack optimizes for and how to choose. Staff angle:
+        <span class="q">"pick a serving stack for a new product and defend it."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Latency math: TTFT, tokens/sec, roofline, cost per token</span>
+          <span class="status planned">Planned</span></div>
+        <p>Back-of-envelope serving arithmetic — the single most deployable Staff skill. Staff angle:
+        <span class="q">"how many GPUs do we need for 10k requests per second?"</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 4 — Architecture &amp; efficiency</h2>
+      <p class="tagline">Why the transformer looks the way it does in 2026.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">Attention variants: MHA → GQA → MLA</span>
+          <span class="status planned">Planned</span></div>
+        <p>KV-cache compression through architecture: fewer heads, latent compression. Staff angle:
+        <span class="q">"why did everyone move to GQA?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">FlashAttention</span>
+          <span class="status planned">Planned</span></div>
+        <p>Attention is memory-bound, not compute-bound — tiling changes the asymptotics in practice.
+        Staff angle: <span class="q">"why is naive attention slow even though it's 'just' O(n²)?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">MoE: routing, expert parallelism, load balancing</span>
+          <span class="status planned">Planned</span></div>
+        <p>Capacity without proportional compute; the all-to-all tax. Staff angle:
+        <span class="q">"when does MoE beat dense at fixed inference budget?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">RoPE &amp; positional encodings</span>
+          <span class="status planned">Planned</span></div>
+        <p>Relative positions via rotation; extrapolation to long context. Staff angle:
+        <span class="q">"your model degrades past its training length — why?"</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 5 — Data &amp; evaluation</h2>
+      <p class="tagline">Garbage in, garbage out — at trillion-token scale, with receipts.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">Dedup &amp; decontamination</span>
+          <span class="status planned">Planned</span></div>
+        <p>Near-dup detection at web scale; keeping benchmarks out of training. Staff angle:
+        <span class="q">"your eval scores jumped 5 points — is it real?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Data mixing</span>
+          <span class="status planned">Planned</span></div>
+        <p>Domain weights as hyperparameters; the ablations nobody can afford to rerun. Staff angle:
+        <span class="q">"how do you decide the code-to-web ratio?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Eval harnesses</span>
+          <span class="status planned">Planned</span></div>
+        <p>Reproducible evals, statistical significance, and eval-driven development. Staff angle:
+        <span class="q">"design an eval suite for a new capability."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">LLM-as-judge, human eval, red-teaming</span>
+          <span class="status planned">Planned</span></div>
+        <p>When automated judges work, when only humans do, and adversarial probing. Staff angle:
+        <span class="q">"your judge agrees with itself but not with users — now what?"</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 6 — Staff system design &amp; behavioral</h2>
+      <p class="tagline">The rounds that decide Staff: design at scale, own the tradeoffs, tell the story.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title">Design training on 10k GPUs</span>
+          <span class="status planned">Planned</span></div>
+        <p>Full-stack design: parallelism strategy, fabric, checkpointing, failure budget. The capstone of
+        Phases 1–2.</p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Design inference for 100M DAU</span>
+          <span class="status planned">Planned</span></div>
+        <p>Capacity math, SLO tiers, batching, caching, cost per token. The capstone of Phase 3.</p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Cost &amp; capacity modeling</span>
+          <span class="status planned">Planned</span></div>
+        <p>Translating architecture choices into dollars and GPUs — the Staff superpower. Answers
+        <span class="q">"is this model worth serving?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Reliability &amp; incidents at scale</span>
+          <span class="status planned">Planned</span></div>
+        <p>Silent data corruption, stragglers, gray failures — and the postmortem culture. Answers
+        <span class="q">"tell me about a production incident you owned."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Behavioral: hard technical decisions</span>
+          <span class="status planned">Planned</span></div>
+        <p>STAR-format stories from TikTok Live leadership: ambiguous calls, tradeoffs, outcomes.</p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Behavioral: technical strategy &amp; influence</span>
+          <span class="status planned">Planned</span></div>
+        <p>Roadmapping, VP-level reporting, aligning teams without authority — your documented strengths,
+        rehearsed.</p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">Behavioral: mentoring &amp; disagreement</span>
+          <span class="status planned">Planned</span></div>
+        <p>Growing engineers 4×, and the stories where you were wrong or overruled — interviewers probe
+        for both.</p>
+      </div>
+    </div>
+
+    <p class="progress">Map status: 5 of 46 nodes complete (9 lessons taught) — the twice-daily series fills in the rest.</p>
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
