@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFT gotchas: the eight ways fine-tuning quietly goes wrong — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-qa { background:#efd0c0; color:var(--accent-deep); }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    .gotcha { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+              box-shadow:var(--raised); padding:1.25rem 1.5rem; margin-bottom:1.25rem; }
+    .gotcha h2 { font-size:1.35rem; color:var(--accent-deep); margin:0 0 .5rem; }
+    .gotcha h2 .n { color:var(--accent); font-family:"Caveat", cursive; font-size:1.7rem; margin-right:.4rem; }
+    .gotcha p { margin:.4rem 0; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Monday, September 28, 2026</p>
+    <h1>SFT gotchas</h1>
+    <p class="subtitle">The eight ways fine-tuning quietly goes wrong — follow-up to the SFT lesson.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-qa">Q&amp;A</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-sft-manners.webp" alt="Hand-drawn watercolor scene of a model learning manners — prompt tokens ignored, response tokens learned">
+      <figcaption>The masking decision again: these are the ways it breaks in practice.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Follow-up to:</strong>
+      <a href="2026-09-28-sft-instruction-tuning.html" style="color:var(--accent-deep)">SFT: Teaching the Model Its Manners</a>
+      — the questions that came right after the lesson, answered.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">1.</span>Template mismatch</h2>
+      <p>Train with one chat template, serve with another (or none), and the model silently degrades. It
+      only ever learned the exact token format it trained on. This wastes more weeks than any other SFT bug.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">2.</span>Forgetting loss masking</h2>
+      <p>If loss runs on prompt tokens too, you're training the model to predict <em>user</em>
+      instructions — literally teaching it to roleplay the human instead of answering. Mask every prompt
+      token with <code>−100</code>.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">3.</span>Masking the wrong turns</h2>
+      <p>In multi-turn data, every assistant turn should count; every user/system turn shouldn't. One
+      off-by-one in your masking code and you're training on the wrong half of the conversation.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">4.</span>Too much training</h2>
+      <p>More than ~1–3 epochs or too high a learning rate and you start eroding pretraining knowledge
+      (catastrophic forgetting). SFT is nudging settled weights, not rebuilding them — keep the LR
+      small, roughly 1–2e−5.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">5.</span>Junk data at scale</h2>
+      <p>LIMA's lesson cuts both ways: 1k excellent examples beat 1M mediocre ones. Scraped instruction
+      data full of wrong answers teaches confident wrongness. Quality dominates quantity.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">6.</span>Contamination</h2>
+      <p>Benchmark questions leaking into your SFT data makes eval scores lie to you. Decontaminate, or
+      your "gains" are fiction.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">7.</span>Packing without boundaries</h2>
+      <p>Concatenating short examples into long sequences for efficiency is standard — but without proper
+      attention masking, the model cross-attends between unrelated examples and learns spurious links.</p>
+    </div>
+
+    <div class="gotcha">
+      <h2><span class="n">8.</span>Style overfitting</h2>
+      <p>SFT rewards the <em>shape</em> of good answers, so models learn to sound helpful — verbose,
+      sycophantic — without being right. That's exactly what the RL stage exists to fix, and it's the
+      next node on the knowledge tree.</p>
+    </div>
+
+    <p class="full-link">The lesson this follows:
+      <a href="2026-09-28-sft-instruction-tuning.html">SFT: Teaching the Model Its Manners</a>
+    </p>
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>

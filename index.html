@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Infra Notebook — AI Infra Learning Series</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper: #f1e7da;
+      --ink: #23221f;
+      --ink-soft: #6f6555;
+      --accent: #a13f04;
+      --accent-deep: #7a3303;
+      --line: #e3d6c1;
+      --measure: 720px;
+      --radius: 16px;
+      --raised: 0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.5; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:3rem 1rem 4rem; }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.5rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700;
+         font-size:clamp(3rem,7vw,4.5rem); color:var(--accent); margin:.25rem 0 1rem; line-height:1.1; }
+    .lede { text-align:center; color:var(--ink-soft); max-width:34rem; margin:0 auto 3rem;
+            font-style:italic; font-size:1.25rem; }
+    .post-card { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+                 box-shadow:var(--raised); padding:1.5rem 1.75rem; margin-bottom:1.5rem; }
+    .post-card .date { color:var(--ink-soft); font-size:1rem; margin:0 0 .35rem; }
+    .post-card h2 { margin:0 0 .5rem; font-size:1.6rem; line-height:1.25; }
+    .post-card h2 a { color:var(--ink); text-decoration:none; border-bottom:2px solid var(--accent); }
+    .post-card h2 a:hover { color:var(--accent-deep); }
+    .chips { margin:.6rem 0 .8rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .chip.type-qa { background:#efd0c0; color:var(--accent-deep); }
+    .excerpt { color:var(--ink-soft); margin:.25rem 0 0; }
+    footer { text-align:center; color:var(--ink-soft); font-size:1rem; margin-top:3rem; }
+    footer .sig { font-family:"Caveat", cursive; font-size:1.75rem; color:var(--accent-deep); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="dateline">A running revision log · started Monday, September 28, 2026</p>
+    <h1>The Infra Notebook</h1>
+    <p class="lede">Every lesson from the twice-daily AI-infra learning series — plus the follow-up
+    questions and gotchas — kept in one place for revision. Newest first.</p>
+
+    <div class="post-list">
+
+      <article class="post-card">
+        <p class="date">Monday, September 28, 2026</p>
+        <h2><a href="posts/2026-09-28-sft-gotchas.html">SFT gotchas: the eight ways fine-tuning quietly goes wrong</a></h2>
+        <div class="chips">
+          <span class="chip branch">SFT and RL</span>
+          <span class="chip type-qa">Q&amp;A</span>
+        </div>
+        <p class="excerpt">Template mismatch, unmasked prompts, multi-turn masking bugs, over-training, junk data, contamination, leaky packing, and style overfitting — the practical failures behind the SFT lesson.</p>
+      </article>
+
+      <article class="post-card">
+        <p class="date">Monday, September 28, 2026</p>
+        <h2><a href="posts/2026-09-28-sft-instruction-tuning.html">SFT: teaching the model its manners — instruction tuning, chat templates, loss masking</a></h2>
+        <div class="chips">
+          <span class="chip branch">SFT and RL</span>
+          <span class="chip type-lesson">Lesson</span>
+        </div>
+        <p class="excerpt">Lesson B1: SFT teaches the shape of the job, not new facts — and the whole trick fits inside one masking decision.</p>
+      </article>
+
+      <article class="post-card">
+        <p class="date">Monday, September 28, 2026</p>
+        <h2><a href="posts/2026-09-28-nvlink-infiniband-nccl.html">NVLink, InfiniBand, and NCCL: the 18× cliff</a></h2>
+        <div class="chips">
+          <span class="chip branch">Distributed training</span>
+          <span class="chip type-lesson">Lesson</span>
+        </div>
+        <p class="excerpt">Multi-node training comes down to one ratio — 900 GB/s inside the node, ~50 GB/s across it — and the overlap that makes training possible anyway.</p>
+      </article>
+
+    </div>
+
+    <footer>
+      <p class="sig">— The Infra Notebook</p>
+      <p>Built for structured revision: every lesson builds on the last, and connects to the next.</p>
+    </footer>
+  </div>
+</body>
+</html>

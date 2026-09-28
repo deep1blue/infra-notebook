@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NVLink, InfiniBand, and NCCL: the 18× cliff — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    table { width:100%; border-collapse:collapse; margin:1.25rem 0; font-size:1.05rem; }
+    th, td { text-align:left; padding:.6rem .7rem; border-bottom:1px solid var(--line); }
+    th { color:var(--accent-deep); }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Monday, September 28, 2026</p>
+    <h1>NVLink, InfiniBand, and NCCL</h1>
+    <p class="subtitle">The whole of multi-node training comes down to one ratio: eighteen to one.</p>
+    <div class="chips">
+      <span class="chip branch">Distributed training</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-nvlink-cliff.webp" alt="Hand-drawn scene of GPU nodes connected by links of vastly different widths, illustrating the bandwidth cliff between NVLink and InfiniBand">
+      <figcaption>The bandwidth ladder: every step down is a cliff.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> ring all-reduce, ZeRO/FSDP, tensor parallelism,
+      pipeline parallelism — the parallelisms that decide <em>where</em> traffic lives.</p>
+    </div>
+
+    <p>A GPU talks to the seven neighbors in its own node over NVLink at 900 GB/s — but to GPUs in
+    the next rack over InfiniBand at roughly 50 GB/s per direction. That 18× gap is the single most
+    important number in distributed training.</p>
+
+    <h2>The bandwidth ladder</h2>
+    <p>The steps are cliffs. At the top, a GPU reads its own HBM at 3.35 TB/s. Inside the node,
+    NVLink 4 runs 900 GB/s bidirectional (NVLink 5 on the B200 doubles it to 1.8 TB/s). Then the
+    first cliff: PCIe Gen5 manages about 128 GB/s. Then the second, bigger one: a single InfiniBand
+    NDR link carries roughly 50 GB/s per direction.</p>
+
+    <table>
+      <tr><th>Hop</th><th>Fabric</th><th>Bandwidth (per GPU)</th></tr>
+      <tr><td>GPU to its own memory</td><td>HBM3 (H100)</td><td>~3.35 TB/s</td></tr>
+      <tr><td>GPU to GPU in the node</td><td>NVLink 4 (NVLink 5)</td><td>900 GB/s (1.8 TB/s), bidirectional</td></tr>
+      <tr><td>GPU to CPU or other devices</td><td>PCIe Gen5 x16</td><td>~128 GB/s</td></tr>
+      <tr><td>GPU to GPU across nodes</td><td>IB NDR 400</td><td>~50 GB/s per direction</td></tr>
+    </table>
+
+    <p>This ladder is the real answer to a question the earlier lessons kept deferring: <em>where
+    parallelism lives is where the traffic lives.</em> Tensor parallelism's all-reduce traffic is
+    heavy, so it stays inside the node on NVLink. Data-parallel gradient syncs ride the slow fabric
+    across nodes. That is not a preference; it is the ratio doing the deciding.</p>
+
+    <p>It is also why Meta's clusters matter here: they built two 24,576-H100 clusters side by side —
+    one InfiniBand, one RoCEv2 — and the Ethernet cluster matched InfiniBand's training throughput.
+    The interview question is no longer "IB or Ethernet" but "how do you keep the fabric lossless
+    and uncongested at scale?"</p>
+
+    <h2>NCCL: the library that chooses how traffic moves</h2>
+    <p>Between nodes the traffic moves by RDMA, and the library choosing how it moves is NCCL. It is
+    not just "the all-reduce library": for every collective it picks a <em>transport</em> (fastest
+    available — NVLink in-node, IB RDMA across nodes, TCP as fallback), an <em>algorithm</em>, and a
+    <em>protocol</em>.</p>
+    <p>The algorithm is the bandwidth-vs-latency tradeoff. Ring takes <code>2(N−1)</code> steps and
+    keeps every link busy, so it wins for <strong>large messages</strong>. Tree takes
+    <code>2·log₂N</code> steps, so it wins for <strong>small</strong> ones — the crossover sits around
+    a few megabytes across nodes. On NVSwitch systems there are also in-network options: NVLS lets the
+    switch do the reduction itself, and CollNet hands the reduction to the InfiniBand switch.</p>
+
+    <h2>The worked number: why overlap is everything</h2>
+    <p>A 13B-class training step moves 52 GB of gradients across 128 GPUs. A ring all-reduce over
+    that fabric costs about <strong>2.1 seconds of raw communication</strong> — longer than the step's
+    entire compute. Training only works because of overlap. Gradients arrive bucket by bucket during
+    the backward pass, so each bucket's all-reduce fires on a separate stream while the next bucket
+    still computes. The 2.1 seconds get interleaved behind roughly 4 seconds of compute, and the step
+    pays only the exposed tail.</p>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> the diagnostic questions interviewers actually
+      ask when step time jumps with scale — (1) which phase binds, comm or compute; (2) is the comm
+      exposed or hidden. Check overlap coverage before ever saying "buy more network."</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">Your thirty-second interview answer</span>
+      "A GPU talks to its node-mates at 900 GB/s over NVLink but to the next rack at ~50 GB/s over
+      InfiniBand — an 18× cliff. So heavy all-reduce traffic like tensor parallelism stays in-node,
+      gradient syncs ride the slow fabric, and training only survives because bucketed all-reduces
+      overlap communication behind compute. When step time jumps at scale, diagnose which phase binds
+      and whether the comm is exposed before blaming the network."
+    </div>
+
+    <p class="full-link">See the full presentation:
+      <a href="../../briefs/NVLink, InfiniBand, and NCCL (2026-09-28 13.41.30).html">NVLink, InfiniBand, and NCCL — Letter brief</a>
+    </p>
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>

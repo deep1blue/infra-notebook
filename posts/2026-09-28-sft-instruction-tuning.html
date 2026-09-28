@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFT: Instruction Tuning, Chat Templates, and Loss Masking — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Monday, September 28, 2026</p>
+    <h1>SFT: Teaching the Model Its Manners</h1>
+    <p class="subtitle">Pretraining builds a brilliant mind with no manners. Supervised fine-tuning is the
+    short, careful schooling that turns a document-completer into an assistant — and the whole trick
+    fits inside one masking decision.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-sft-manners.webp" alt="Hand-drawn watercolor scene of a model learning manners — prompt tokens ignored, response tokens learned">
+      <figcaption>Lesson B1: the shape of the job, not new facts.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> pretraining — next-token prediction on raw internet
+      text. One-line recap: a base model knows what text usually comes next. It has knowledge, but no
+      manners and no notion of being helpful.</p>
+    </div>
+
+    <p>Watch what that means in practice. Hand a pure base model the prompt "write a haiku about
+    GPUs" and it may emit three more prompts, or a forum argument about whether haikus can mention
+    tensor cores — because on the internet, all of those are plausible continuations. The model is a
+    brilliant improv partner with no script. Supervised fine-tuning hands it the script.</p>
+
+    <h2>The deep intuition: shape, not facts</h2>
+    <p>SFT teaches the <em>shape</em> of the job, not new facts. The landmark evidence is LIMA (2023)
+    — researchers aligned a 65-billion-parameter model with just <strong>1,000 carefully curated
+    examples</strong>. A thousand. The knowledge was already in the weights from pretraining; SFT
+    mostly <em>elicits</em> the behavior of being an assistant. When someone tells you fine-tuning
+    "teaches the model new things," this is the counterexample to keep in your pocket.</p>
+
+    <h2>The mechanism: four parts, one that interviewers probe</h2>
+    <ol class="steps">
+      <li><strong>The data:</strong> (instruction, response) pairs, often multi-turn conversations,
+      where quality dominates quantity.</li>
+      <li><strong>The chat template:</strong> roles get wrapped in special tokens, e.g.
+      <code>&lt;|user|&gt;Explain GPUs&lt;|end|&gt;&lt;|assistant|&gt;…</code>. The model only ever
+      trains on this exact format, so inference prompts must match it token for token — template
+      mismatch is a real, silent performance killer.</li>
+      <li><strong>Loss masking:</strong> cross-entropy is computed <em>only on the response
+      tokens</em>. Every prompt token gets label <code>−100</code>, the "ignore me" label. Why?
+      Because training the model to predict the <em>user's</em> tokens would teach it to roleplay the
+      user. You want P(response | instruction), never P(instruction).</li>
+      <li><strong>The regime:</strong> one to three epochs at a small learning rate, roughly
+      1–2e−5 — you are nudging settled weights, not rebuilding them — and often through LoRA or
+      QLoRA when a full finetune costs too much.</li>
+    </ol>
+
+    <h2>The math that matters</h2>
+    <p>The math is almost disappointingly simple, which is the point. It is the same autoregressive
+    loss as pretraining, restricted to the response:</p>
+    <div class="math">L = −Σ<sub>t ∈ response</sub> log p(x<sub>t</sub> | x<sub>&lt;t</sub>)</div>
+    <p>Nothing exotic. The masking is the whole trick — one decision about <em>which tokens
+    count</em> is what separates "assistant" from "autocomplete."</p>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> the next two nodes on the tree. Next is SFT data
+      curation — why a thousand great examples beat a million mediocre ones, and how you keep test
+      questions from leaking into training. After that comes the RLHF pipeline, which takes
+      <em>this</em> SFT model as its starting policy and teaches it preferences. Every Llama chat
+      model you have ever used walked exactly this path.</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">Your thirty-second interview answer</span>
+      "SFT converts a next-token predictor into an instruction follower by fine-tuning on
+      instruction–response pairs with loss computed only on the response tokens. The LIMA result — a
+      thousand curated examples aligning a 65B model — shows SFT teaches format and behavior, not new
+      knowledge."
+    </div>
+
+    <p class="full-link">See the full presentation:
+      <a href="../../briefs/SFT - Instruction Tuning, Chat Templates, and Loss Masking (2026-09-28 15.20.00).html">SFT: Instruction Tuning, Chat Templates, and Loss Masking — Letter brief</a>
+    </p>
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
