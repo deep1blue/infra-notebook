@@ -38,6 +38,8 @@
     .status.planned { background:#efe6d6; color:var(--ink-soft); }
     .node p { margin:.35rem 0 0; color:var(--ink-soft); font-size:1.08rem; }
     .node p .q { color:var(--ink); font-style:italic; }
+    .node .links { margin-top:.3rem; }
+    .node .links a { color:var(--accent-deep); font-size:1rem; margin-right:1rem; }
     .progress { text-align:center; color:var(--ink-soft); margin:2.5rem 0 1rem; }
     .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
            margin-top:1rem; }
@@ -46,292 +48,310 @@
 <body>
   <div class="wrap">
     <p class="back"><a href="index.html">← The Infra Notebook</a> · <a href="curriculum.html">AI/ML round map</a></p>
-    <p class="dateline">The coding-round roadmap · started Tuesday, September 29, 2026</p>
+    <p class="dateline">The coding-round roadmap · started Monday, September 28, 2026</p>
     <h1>LeetCode Round Curriculum</h1>
-    <p class="subtitle">The full map for the algorithms &amp; data-structures loop — from Big-O to
-    dynamic programming to the timed mock itself, starting from scratch. The midday lesson walks
-    this map node by node; each lesson links back here, and each node below links forward to its
-    lesson as it's written. Companion to the <a href="curriculum.html">AI/ML round map</a>.</p>
+    <p class="subtitle">The full map for the algorithms &amp; data-structures loop — data structures
+    first, then algorithm basics, then the interview pattern playbook, up to the timed mock itself.
+    The midday lesson walks this map node by node; each lesson links back here, and each node below
+    links forward to its lesson as it's written. Companion to the
+    <a href="curriculum.html">AI/ML round map</a>.</p>
 
     <div class="phase">
-      <h2>Phase 0 — Foundations: thinking in complexity</h2>
-      <p class="tagline">Before a single LeetCode problem: how to think about cost, and how to read
-      constraints like a spec sheet.</p>
+      <h2>Phase 0 — Data structures: the basics</h2>
+      <p class="tagline">The vocabulary of every coding interview. Know how each structure is built
+      and what each operation costs — everything else is composition.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">Big-O, Ω, Θ: what complexity actually measures</span>
+        <div class="node-head"><span class="node-title">L1 · Arrays: the foundation</span>
           <span class="status planned">Planned</span></div>
+        <p>Contiguous memory, O(1) indexing by arithmetic, static vs dynamic arrays; why append is
+        usually cheap and insert-at-front is not. Answers
+        <span class="q">"why is indexing O(1)?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L2 · Strings: the array's tricky sibling</span>
+          <span class="status planned">Planned</span></div>
+        <p>Immutability in Python, encoding in one paragraph, the O(n) operations people forget
+        (concatenation in a loop), and why strings love two pointers. Answers
+        <span class="q">"why is s += ch in a loop O(n²)?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L3 · Linked lists: pointer surgery</span>
+          <span class="status planned">Planned</span></div>
+        <p>Nodes and links; reversal (iterative and recursive), dummy heads, merging two lists —
+        rearranging pointers without losing the list. Answers
+        <span class="q">"reverse a linked list."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L4 · Stacks &amp; queues: LIFO, FIFO, and the deque</span>
+          <span class="status planned">Planned</span></div>
+        <p>The two auxiliary structures behind nesting problems, BFS, and sliding windows;
+        Python's deque, and why <span class="q">list.pop(0)</span> is a trap. Answers
+        <span class="q">"implement a queue using stacks."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L5 · Hash maps &amp; sets: the O(1) workhorse</span>
+          <span class="status planned">Planned</span></div>
+        <p>Average O(1) lookup/insert — and what "average" hides: hashing, collisions, load factor,
+        hashability. Answers <span class="q">"two sum."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L6 · Frequency &amp; grouping patterns</span>
+          <span class="status planned">Planned</span></div>
+        <p>Counter-driven thinking: anagrams, top-k frequent elements, first unique character.
+        Answers <span class="q">"group anagrams."</span></p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <h2>Phase 1 — Algorithms: the basics</h2>
+      <p class="tagline">How to reason about cost and correctness. With data structures under your
+      belt, complexity finally has something concrete to bite on.</p>
+
+      <div class="node">
+        <div class="node-head"><span class="node-title"><a href="posts/2026-09-28-big-o-omega-theta.html">L7 · Big-O, Ω, Θ: what complexity actually measures</a></span>
+          <span class="status done">Done</span></div>
         <p>What O(n) actually promises — and what it doesn't. Drop the constants, keep the growth;
         worst case is the default language of interviews. Answers
         <span class="q">"what's the complexity of your solution?"</span></p>
+        <p class="links"><a href="posts/2026-09-28-big-o-omega-theta.html">Lesson →</a><a href="https://deep1blue.github.io/study-guides/big-o/">Study guide →</a></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Amortized analysis &amp; complexity pitfalls</span>
+        <div class="node-head"><span class="node-title">L8 · Recursion: the call stack as a tool</span>
           <span class="status planned">Planned</span></div>
-        <p>Why appending to a list is O(1) even though resize is O(n). The accounting method in one
-        lesson; the traps (hidden O(n) inside loops, string concatenation). Answers
-        <span class="q">"isn't that O(n²)?"</span></p>
+        <p>Base case, trust the recursion, combine. The call stack as scratch space; depth limits
+        and why iteration sometimes wins. Answers
+        <span class="q">"why is your recursion correct?"</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Python for interviews: the working toolkit</span>
+        <div class="node-head"><span class="node-title">L9 · Sorting: why O(n log n), and what Python actually runs</span>
           <span class="status planned">Planned</span></div>
-        <p>The 20% of the language behind 80% of solutions: lists, dicts, sets, heapq, deque, bisect,
-        defaultdict/Counter, itertools — and the cost of each operation, cold. Answers
+        <p>Merge sort and quicksort as divide-and-conquer templates; the comparison-sort lower bound
+        in one paragraph; Timsort, stability, and key functions. Answers
+        <span class="q">"sort this in O(n log n)."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L10 · Amortized analysis &amp; complexity pitfalls</span>
+          <span class="status planned">Planned</span></div>
+        <p>Why appending to a list is O(1) even though resize is O(n) — now motivated by the
+        dynamic arrays from L1. The accounting method in one lesson; the traps (hidden O(n) inside
+        loops, string concatenation). Answers <span class="q">"isn't that O(n²)?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L11 · Python for interviews: the working toolkit</span>
+          <span class="status planned">Planned</span></div>
+        <p>The 20% of the language behind 80% of solutions: lists, dicts, sets, heapq, deque,
+        bisect, defaultdict/Counter, itertools — and the cost of each operation, cold. Answers
         <span class="q">"why is Python fine for interviews?"</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Constraint decoding: let n choose your algorithm</span>
+        <div class="node-head"><span class="node-title">L12 · Constraint decoding: let n choose your algorithm</span>
           <span class="status planned">Planned</span></div>
-        <p>n ≤ 10 → exponential may pass; n ≤ 10⁵ → O(n log n); n ≤ 10⁹ → O(log n) or O(1). Read the
-        constraints as the intended solution before you write a line. Answers
+        <p>n ≤ 10 → exponential may pass; n ≤ 10⁵ → O(n log n); n ≤ 10⁹ → O(log n) or O(1). Read
+        the constraints as the intended solution before you write a line. Answers
         <span class="q">"how do you pick an approach?"</span></p>
       </div>
     </div>
 
     <div class="phase">
-      <h2>Phase 1 — Arrays &amp; strings</h2>
-      <p class="tagline">The highest-yield patterns in interview coding. Most easy/medium array problems
-      are one of these four.</p>
+      <h2>Phase 2 — Interview techniques: the pattern playbook</h2>
+      <p class="tagline">The moves interviewers expect you to know cold. Each one turns a whole
+      problem family into a template.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">Two pointers</span>
+        <div class="node-head"><span class="node-title">L13 · Two pointers</span>
           <span class="status planned">Planned</span></div>
-        <p>Opposite ends, same direction, fast/slow — the first pattern to reach for on sorted arrays
-        and linked lists. Answers <span class="q">"find a pair summing to k."</span></p>
+        <p>Opposite ends, same direction, fast/slow — the first pattern to reach for on sorted
+        arrays and linked lists. Answers <span class="q">"find a pair summing to k."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Sliding window</span>
+        <div class="node-head"><span class="node-title">L14 · Sliding window</span>
           <span class="status planned">Planned</span></div>
         <p>Fixed and variable windows; when to expand vs shrink. The template behind most substring
         problems. Answers <span class="q">"longest substring without repeating characters."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Prefix sums &amp; difference arrays</span>
+        <div class="node-head"><span class="node-title">L15 · Fast &amp; slow pointers: Floyd's cycle detection</span>
+          <span class="status planned">Planned</span></div>
+        <p>Why the meeting-point math works, and the second phase that finds the cycle start. O(1)
+        space elegance on the linked lists from L3. Answers
+        <span class="q">"detect a cycle."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L16 · Prefix sums &amp; difference arrays</span>
           <span class="status planned">Planned</span></div>
         <p>Trade O(n) space for O(1) range queries; difference arrays for range updates. Answers
         <span class="q">"sum over subarrays, fast."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Subarray patterns: Kadane and beyond</span>
+        <div class="node-head"><span class="node-title">L17 · Subarray patterns: Kadane and beyond</span>
           <span class="status planned">Planned</span></div>
-        <p>Maximum subarray as the canonical "extend or restart" decision; generalizes to circular and
-        product variants. Answers <span class="q">"maximum subarray."</span></p>
+        <p>Maximum subarray as the canonical "extend or restart" decision; generalizes to circular
+        and product variants. Answers <span class="q">"maximum subarray."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L18 · Binary search: the template</span>
+          <span class="status planned">Planned</span></div>
+        <p>Lower/upper bound thinking: search the predicate, not the value. The lo/hi invariant
+        that ends off-by-one errors forever — plus rotated arrays and staircase search in sorted
+        matrices. Answers <span class="q">"search in a rotated array."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L19 · Binary search on answer</span>
+          <span class="status planned">Planned</span></div>
+        <p>When the answer space is monotonic, binary-search it: capacities, speeds, days. The most
+        under-taught binary search pattern. Answers
+        <span class="q">"minimum eating speed."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L20 · Monotonic stacks &amp; deque patterns</span>
+          <span class="status planned">Planned</span></div>
+        <p>Next-greater-element template; deque for sliding-window maximum. The stacks from L4,
+        weaponized. Answers <span class="q">"daily temperatures."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L21 · Intervals: merge, insert, meeting rooms</span>
+          <span class="status planned">Planned</span></div>
+        <p>Sort by start, then one pass. The template behind scheduling problems everywhere.
+        Answers <span class="q">"merge intervals."</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L22 · Greedy: when it works, how to argue it</span>
+          <span class="status planned">Planned</span></div>
+        <p>When local optimality is safe: the exchange argument in one paragraph. Learn the smell
+        of a greedy problem — and when to distrust it. Answers
+        <span class="q">"why is greedy correct here?"</span></p>
+      </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L23 · Design: LRU cache</span>
+          <span class="status planned">Planned</span></div>
+        <p>Hash map + doubly linked list = O(1) get/put with eviction — L3 and L5 composed. The
+        design problem every loop asks. Answers <span class="q">"design an LRU cache."</span></p>
       </div>
     </div>
 
     <div class="phase">
-      <h2>Phase 2 — Hashing</h2>
-      <p class="tagline">Trading space for time — the single most common optimization in coding interviews.</p>
-
-      <div class="node">
-        <div class="node-head"><span class="node-title">Hash maps &amp; sets: the O(1) workhorse</span>
-          <span class="status planned">Planned</span></div>
-        <p>Average O(1) lookup/insert — and what "average" hides: collisions, worst cases, hashability.
-        Answers <span class="q">"two sum."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Frequency &amp; grouping patterns</span>
-          <span class="status planned">Planned</span></div>
-        <p>Counter-driven patterns: anagrams, top-k frequent, first unique character. Answers
-        <span class="q">"group anagrams."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Design: LRU cache</span>
-          <span class="status planned">Planned</span></div>
-        <p>Hash map + doubly linked list = O(1) get/put with eviction. The design problem every loop
-        asks. Answers <span class="q">"design an LRU cache."</span></p>
-      </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 3 — Linked lists, stacks, queues</h2>
-      <p class="tagline">Pointer manipulation under pressure, and the two auxiliary structures that unlock
-      whole problem families.</p>
-
-      <div class="node">
-        <div class="node-head"><span class="node-title">Linked lists: pointer surgery</span>
-          <span class="status planned">Planned</span></div>
-        <p>Reversal (iterative and recursive), dummy heads, merging — rearranging links without losing
-        the list. Answers <span class="q">"reverse a linked list."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Cycle detection: Floyd's tortoise &amp; hare</span>
-          <span class="status planned">Planned</span></div>
-        <p>Why the meeting-point math works, and the second phase that finds the cycle start. O(1)
-        space elegance. Answers <span class="q">"detect a cycle."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Monotonic stacks &amp; deque patterns</span>
-          <span class="status planned">Planned</span></div>
-        <p>Next-greater-element template; deque for sliding-window maximum. Answers
-        <span class="q">"daily temperatures."</span></p>
-      </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 4 — Recursion &amp; divide and conquer</h2>
-      <p class="tagline">Think recursively, then let divide-and-conquer do the heavy lifting.</p>
-
-      <div class="node">
-        <div class="node-head"><span class="node-title">Recursion: the call stack as a tool</span>
-          <span class="status planned">Planned</span></div>
-        <p>Base case, trust the recursion, combine. The call stack as scratch space; depth limits and
-        why iteration sometimes wins. Answers <span class="q">"why is your recursion correct?"</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Divide &amp; conquer: merge/quick sort templates</span>
-          <span class="status planned">Planned</span></div>
-        <p>Split, solve, merge — the pattern behind half of all advanced problems. Answers
-        <span class="q">"sort this in O(n log n)."</span></p>
-      </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 5 — Trees</h2>
+      <h2>Phase 3 — Trees &amp; heaps</h2>
       <p class="tagline">If you can traverse it, you can solve it. Trees are recursion made visible.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">Traversals: recursive and iterative</span>
+        <div class="node-head"><span class="node-title">L24 · Traversals: recursive and iterative</span>
           <span class="status planned">Planned</span></div>
-        <p>Preorder/inorder/postorder by recursion — then with an explicit stack. Simulating the stack
-        is the skill that transfers everywhere. Answers
+        <p>Preorder/inorder/postorder by recursion — then with an explicit stack. Simulating the
+        stack is the skill that transfers everywhere. Answers
         <span class="q">"traverse without recursion."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">BSTs: properties, validation, search</span>
+        <div class="node-head"><span class="node-title">L25 · BSTs: properties, validation, search</span>
           <span class="status planned">Planned</span></div>
-        <p>The invariant (left &lt; node &lt; right) does all the work: search, insert, validate in O(h).
-        Answers <span class="q">"validate a binary search tree."</span></p>
+        <p>The invariant (left &lt; node &lt; right) does all the work: search, insert, validate in
+        O(h). Answers <span class="q">"validate a binary search tree."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">LCA, diameter, path sums</span>
+        <div class="node-head"><span class="node-title">L26 · LCA, diameter, path sums</span>
           <span class="status planned">Planned</span></div>
         <p>One-pass post-order patterns: return info upward, track the answer globally. Answers
         <span class="q">"lowest common ancestor."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Serialization &amp; building trees</span>
+        <div class="node-head"><span class="node-title">L27 · Serialization &amp; building trees</span>
           <span class="status planned">Planned</span></div>
         <p>Encode a tree to a string and back (preorder + nulls); build from traversal pairs. Tests
         whether you really understand structure. Answers
         <span class="q">"serialize a binary tree."</span></p>
       </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 6 — Heaps</h2>
-      <p class="tagline">Keeping track of "the biggest few" without sorting everything.</p>
-
       <div class="node">
-        <div class="node-head"><span class="node-title">Top-k patterns</span>
+        <div class="node-head"><span class="node-title">L28 · Top-k patterns</span>
           <span class="status planned">Planned</span></div>
-        <p>A heap of size k beats a full sort: O(n log k). The min-heap/max-heap decision rule, cold.
-        Answers <span class="q">"kth largest element."</span></p>
+        <p>A heap of size k beats a full sort: O(n log k). The min-heap/max-heap decision rule,
+        cold. Answers <span class="q">"kth largest element."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Two heaps: running median</span>
+        <div class="node-head"><span class="node-title">L29 · Two heaps: running median</span>
           <span class="status planned">Planned</span></div>
         <p>Max-heap + min-heap with a balancing invariant — order statistics on a stream. Answers
         <span class="q">"find the median from a data stream."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Merge k sorted lists</span>
+        <div class="node-head"><span class="node-title">L30 · Merge k sorted lists</span>
           <span class="status planned">Planned</span></div>
         <p>Push heads into a heap, pop-min repeatedly: O(N log k). Heaps as the merger of sorted
         streams. Answers <span class="q">"merge k sorted lists."</span></p>
       </div>
+      <div class="node">
+        <div class="node-head"><span class="node-title">L31 · Tries</span>
+          <span class="status planned">Planned</span></div>
+        <p>Prefix trees: build once, query in O(m). Autocomplete, word search, prefix scores.
+        Answers <span class="q">"implement a trie."</span></p>
+      </div>
     </div>
 
     <div class="phase">
-      <h2>Phase 7 — Graphs</h2>
+      <h2>Phase 4 — Graphs</h2>
       <p class="tagline">Nodes and edges are everywhere once you see them — grids, schedules, networks.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">BFS/DFS: traversal &amp; components</span>
+        <div class="node-head"><span class="node-title">L32 · BFS/DFS: traversal &amp; components</span>
           <span class="status planned">Planned</span></div>
         <p>Traversal as the foundation: connected components, flood fill, grids as graphs. Iterative
         DFS to dodge recursion limits. Answers <span class="q">"number of islands."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Topological sort</span>
+        <div class="node-head"><span class="node-title">L33 · Topological sort</span>
           <span class="status planned">Planned</span></div>
-        <p>Kahn's algorithm (indegrees) and DFS finish-order for DAG ordering; cycle detection falls
-        out for free. Answers <span class="q">"course schedule."</span></p>
+        <p>Kahn's algorithm (indegrees) and DFS finish-order for DAG ordering; cycle detection
+        falls out for free. Answers <span class="q">"course schedule."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Union-find</span>
+        <div class="node-head"><span class="node-title">L34 · Union-find</span>
           <span class="status planned">Planned</span></div>
-        <p>Path compression + union by rank ≈ O(α(n)). Dynamic connectivity without ever building the
-        graph. Answers <span class="q">"are these nodes connected?"</span></p>
+        <p>Path compression + union by rank ≈ O(α(n)). Dynamic connectivity without ever building
+        the graph. Answers <span class="q">"are these nodes connected?"</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Shortest paths: Dijkstra &amp; BFS</span>
+        <div class="node-head"><span class="node-title">L35 · Shortest paths: Dijkstra &amp; BFS</span>
           <span class="status planned">Planned</span></div>
-        <p>BFS for unweighted, Dijkstra for weighted (why the heap works), Bellman-Ford when negatives
-        lurk. Answers <span class="q">"shortest path in a grid."</span></p>
+        <p>BFS for unweighted, Dijkstra for weighted (why the heap works), Bellman-Ford when
+        negatives lurk. Answers <span class="q">"shortest path in a grid."</span></p>
       </div>
     </div>
 
     <div class="phase">
-      <h2>Phase 8 — Binary search</h2>
-      <p class="tagline">Not just sorted arrays: a general strategy for monotonic decision problems.</p>
-
-      <div class="node">
-        <div class="node-head"><span class="node-title">The template: bound thinking</span>
-          <span class="status planned">Planned</span></div>
-        <p>Lower/upper bound thinking: search the predicate, not the value. The lo/hi invariant that
-        ends off-by-one errors forever. Answers <span class="q">"search in a sorted array."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Binary search on answer</span>
-          <span class="status planned">Planned</span></div>
-        <p>When the answer space is monotonic, binary-search it: capacities, speeds, days. The most
-        under-taught binary search pattern. Answers <span class="q">"minimum eating speed."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Rotated arrays &amp; 2D search</span>
-          <span class="status planned">Planned</span></div>
-        <p>One half is always sorted — that's the whole trick. Staircase search in sorted matrices.
-        Answers <span class="q">"search in a rotated array."</span></p>
-      </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 9 — Dynamic programming</h2>
+      <h2>Phase 5 — Dynamic programming</h2>
       <p class="tagline">The boss level. Recurrence first, table second, always.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">1D DP: recurrence thinking</span>
+        <div class="node-head"><span class="node-title">L36 · 1D DP: recurrence thinking</span>
           <span class="status planned">Planned</span></div>
         <p>Define dp[i] in terms of smaller subproblems: climbing stairs, house robber. The state
         definition IS the solution. Answers <span class="q">"how do you define the state?"</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">2D grid DP</span>
+        <div class="node-head"><span class="node-title">L37 · 2D grid DP</span>
           <span class="status planned">Planned</span></div>
-        <p>Unique paths, min path sum: the grid as a DAG. Space optimization down to one row. Answers
-        <span class="q">"minimum path sum."</span></p>
+        <p>Unique paths, min path sum: the grid as a DAG. Space optimization down to one row.
+        Answers <span class="q">"minimum path sum."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Knapsack family</span>
+        <div class="node-head"><span class="node-title">L38 · Knapsack family</span>
           <span class="status planned">Planned</span></div>
-        <p>0/1 vs unbounded: the loop order is the entire difference. Subset sum as the gateway drug.
-        Answers <span class="q">"partition equal subset sum."</span></p>
+        <p>0/1 vs unbounded: the loop order is the entire difference. Subset sum as the gateway
+        drug. Answers <span class="q">"partition equal subset sum."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">LIS &amp; patience sorting</span>
+        <div class="node-head"><span class="node-title">L39 · LIS &amp; patience sorting</span>
           <span class="status planned">Planned</span></div>
         <p>O(n²) DP first, then the O(n log n) patience-sorting upgrade — and why the piles work.
         Answers <span class="q">"longest increasing subsequence."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Interval &amp; palindrome DP</span>
+        <div class="node-head"><span class="node-title">L40 · Interval &amp; palindrome DP</span>
           <span class="status planned">Planned</span></div>
         <p>Expand-around-center vs the DP table; interval thinking for burst-balloon-style problems.
         Answers <span class="q">"longest palindromic substring."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">State-machine DP: stocks</span>
+        <div class="node-head"><span class="node-title">L41 · State-machine DP: stocks</span>
           <span class="status planned">Planned</span></div>
         <p>States as nodes, transitions as edges — cooldowns, fees, k transactions. The most
         transferable DP mental model there is. Answers
@@ -340,78 +360,53 @@
     </div>
 
     <div class="phase">
-      <h2>Phase 10 — Strings, tries &amp; bits</h2>
-      <p class="tagline">Specialized structures for strings and bits — a small toolkit with high leverage.</p>
+      <h2>Phase 6 — Bits &amp; string matching</h2>
+      <p class="tagline">Two small toolkits with outsized leverage.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">Tries</span>
-          <span class="status planned">Planned</span></div>
-        <p>Prefix trees: build once, query in O(m). Autocomplete, word search, prefix scores. Answers
-        <span class="q">"implement a trie."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Bit manipulation essentials</span>
+        <div class="node-head"><span class="node-title">L42 · Bit manipulation essentials</span>
           <span class="status planned">Planned</span></div>
         <p>XOR tricks, bit masks, Kernighan's bit count. A small toolkit with outsized cleverness.
         Answers <span class="q">"single number."</span></p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">String matching: know KMP exists</span>
+        <div class="node-head"><span class="node-title">L43 · String matching: know KMP exists</span>
           <span class="status planned">Planned</span></div>
-        <p>Naive vs KMP vs Rabin-Karp at the idea level. In Python, <span class="q">in</span> is fine —
-        know why. Answers <span class="q">"implement strStr()."</span></p>
+        <p>Naive vs KMP vs Rabin-Karp at the idea level. In Python, <span class="q">in</span> is
+        fine — know why. Answers <span class="q">"implement strStr()."</span></p>
       </div>
     </div>
 
     <div class="phase">
-      <h2>Phase 11 — Intervals &amp; greedy</h2>
-      <p class="tagline">Sorting plus a single pass solves a surprising amount; greedy demands a proof instinct.</p>
-
-      <div class="node">
-        <div class="node-head"><span class="node-title">Intervals: merge, insert, meeting rooms</span>
-          <span class="status planned">Planned</span></div>
-        <p>Sort by start, then one pass. The template behind scheduling problems everywhere. Answers
-        <span class="q">"merge intervals."</span></p>
-      </div>
-      <div class="node">
-        <div class="node-head"><span class="node-title">Greedy: when it works, how to argue it</span>
-          <span class="status planned">Planned</span></div>
-        <p>When local optimality is safe: the exchange argument in one paragraph. Learn the smell of
-        a greedy problem — and when to distrust it. Answers
-        <span class="q">"why is greedy correct here?"</span></p>
-      </div>
-    </div>
-
-    <div class="phase">
-      <h2>Phase 12 — The round itself</h2>
+      <h2>Phase 7 — The round itself</h2>
       <p class="tagline">The round is a performance, not an exam. Train the performance.</p>
 
       <div class="node">
-        <div class="node-head"><span class="node-title">Pattern recognition drills</span>
+        <div class="node-head"><span class="node-title">L44 · Pattern recognition drills</span>
           <span class="status planned">Planned</span></div>
-        <p>Given a problem statement, name the pattern in 60 seconds. Speed of classification is the
-        real interview skill — the code follows.</p>
+        <p>Given a problem statement, name the pattern in 60 seconds. Speed of classification is
+        the real interview skill — the code follows.</p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Timed mocks: 2 problems, 45 minutes</span>
+        <div class="node-head"><span class="node-title">L45 · Timed mocks: 2 problems, 45 minutes</span>
           <span class="status planned">Planned</span></div>
-        <p>Talk while you code, narrate tradeoffs, manage the clock. The full performance, rehearsed
-        until it's boring.</p>
+        <p>Talk while you code, narrate tradeoffs, manage the clock. The full performance,
+        rehearsed until it's boring.</p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Follow-ups &amp; optimization under pressure</span>
+        <div class="node-head"><span class="node-title">L46 · Follow-ups &amp; optimization under pressure</span>
           <span class="status planned">Planned</span></div>
-        <p>"Now do it in O(1) space." Thinking aloud through the second solution is where offers are
-        won and lost.</p>
+        <p>"Now do it in O(1) space." Thinking aloud through the second solution is where offers
+        are won and lost.</p>
       </div>
       <div class="node">
-        <div class="node-head"><span class="node-title">Debugging on the clock</span>
+        <div class="node-head"><span class="node-title">L47 · Debugging on the clock</span>
           <span class="status planned">Planned</span></div>
         <p>Dry runs, invariants, and the 2-minute bug hunt. Never stare at code — trace it.</p>
       </div>
     </div>
 
-    <p class="progress">Map status: 0 of 45 nodes complete — the midday series starts Tuesday, September 29, 2026.</p>
+    <p class="progress">Map status: 1 of 47 nodes complete — the midday series walks this map in order.</p>
     <p class="sig">— The Infra Notebook</p>
   </div>
 </body>
