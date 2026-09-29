@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arrays: The Foundation — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    table { border-collapse:collapse; width:100%; margin:1.5rem 0; font-size:1.02rem; }
+    th { border-bottom:2px solid var(--accent); text-align:left; padding:.55rem .6rem;
+         font-weight:600; }
+    td { border-bottom:1px solid var(--line); color:var(--ink-soft); padding:.55rem .6rem; }
+    tr:last-child td { border-bottom:0; }
+    td.num { font-variant-numeric:tabular-nums; text-align:right; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+        <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Monday, September 28, 2026</p>
+    <h1>Arrays: The Foundation</h1>
+    <p class="subtitle">The one bargain the array strikes — O(1) access bought with contiguity, which
+    makes the middle expensive to change. Address arithmetic, the doubling trick, in-place
+    read/write pointers, and prefix sums: the four ideas the next 46 lessons keep reusing.</p>
+    <div class="chips">
+      <span class="chip branch">Algorithms and data structures</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-arrays.webp" alt="Hand-drawn illustration of a row of numbered wooden cubby-holes, each holding a card, with a hand sliding a card into a slot">
+      <figcaption>Lesson L1 · the cubby row: contiguous slots, numbered from 0.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> L7 (Big-O, Ω, Θ) — the one algorithms lesson
+      already in your pocket. The exact idea reused: the growth-rate vocabulary. Every cost in this
+      lesson is stated as a function of n, and you already know what the notation promises. Today
+      that language lands on the structure everything else is built from.</p>
+    </div>
+
+    <h2>Intuition: the cubby row</h2>
+    <p>Picture a row of wooden cubby-holes in a mailroom, shoulder to shoulder, numbered 0, 1, 2, …
+    The mailroom has exactly one rule: <em>every cubby is the same size, and there are no gaps between
+    them.</em> Someone asks for the card in cubby 4,217. You don't walk past 4,217 cubbies. You
+    multiply: the start of the row, plus 4,217 times the width of one cubby. One multiplication, one
+    jump. That is the entire array.</p>
+    <p>In memory the formula is <code>address(arr[i]) = base + i × sizeof(element)</code>. Same-size
+    elements plus zero gaps means position is arithmetic, and arithmetic is O(1). This is why arrays
+    are the only structure with true random access — and it's also why the middle is expensive to
+    change: to insert into cubby 3, you must physically slide every card after it one slot to the
+    right. Contiguity is both the superpower and the tax. Everything downstream in this track is a
+    response to one of those two facts.</p>
+    <p>One more reason contiguity matters, from the ML world: contiguous data is what hardware loves.
+    Sequential slots prefetch cleanly, vectorize under SIMD, and coalesce on GPUs — the same reason
+    tensors want to be contiguous. Arrays aren't just the simplest structure; they're the layout the
+    machine is designed to feed on.</p>
+
+    <h2>The math that matters: address arithmetic and the doubling trick</h2>
+    <p>Two derivations. First, indexing: <code>base + i × w</code> is a constant number of operations
+    for any i, so index read/write is Θ(1). Second, insertion at position k: you shift n − k elements,
+    each a constant-time move, so the cost is Θ(n − k), worst-case Θ(n) when k = 0. The cost table,
+    derived rather than memorized:</p>
+    <table>
+      <thead><tr><th>Operation</th><th>Cost</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Read / write <code>a[i]</code></td><td class="num">Θ(1)</td><td>address arithmetic</td></tr>
+        <tr><td>Append (dynamic array)</td><td class="num">O(1) amortized</td><td>capacity doubles (below)</td></tr>
+        <tr><td>Insert / delete at index k</td><td class="num">Θ(n−k)</td><td>shift everything after k</td></tr>
+        <tr><td>Search, unsorted</td><td class="num">Θ(n)</td><td>nothing to do but scan</td></tr>
+        <tr><td>Search, sorted</td><td class="num">Θ(log n)</td><td>binary search (L18)</td></tr>
+        <tr><td>Space</td><td class="num">Θ(n)</td><td>one slot per element</td></tr>
+      </tbody>
+    </table>
+    <p>Now the doubling trick — a preview of L10 (amortized analysis). A Python list is a
+    <em>dynamic</em> array: fixed capacity underneath, and when an append overflows it, Python
+    allocates a geometrically bigger block (~9/8× in CPython; only "geometric" matters) and copies
+    everything over. Count the <em>total</em> work of n appends: n cheap appends, plus copies at sizes
+    1, 2, 4, 8, …, 2<sup>m</sup> with 2<sup>m</sup> &lt; n. That series sums to 2<sup>m+1</sup> − 1
+    &lt; 2n. Total &lt; 3n operations for n appends — so each append costs O(1) <em>amortized</em>.
+    Expensive moments exist (the occasional copy), but averaged over the sequence, append is constant
+    time. Every dynamic array in every language leans on this one series.</p>
+
+    <h2>The code: two canonical array techniques</h2>
+    <p>Two problems carry ninety percent of array interviews. First, in-place work with read/write
+    pointers — the seed of L13 (two pointers):</p>
+    <div class="math" style="text-align:left;font-size:1.05rem;">
+<pre style="margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;">def remove_duplicates_sorted(nums):
+    # Sorted array -&gt; duplicates are adjacent. Two pointers:
+    # `read` scans every element; `write` marks where the next
+    # unique value belongs. Invariant: nums[0..write] holds the
+    # deduplicated prefix, in order, with no gaps.
+    # Time Theta(n), space O(1).
+    if not nums:
+        return 0
+    write = 1
+    for read in range(1, len(nums)):
+        if nums[read] != nums[read - 1]:
+            nums[write] = nums[read]
+            write += 1
+    return write  # length of the deduped prefix</pre>
+    </div>
+    <p>Second, prefix sums — the classic trade of O(n) preprocessing for O(1) queries (full lesson at
+    L16):</p>
+    <div class="math" style="text-align:left;font-size:1.05rem;">
+<pre style="margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;">class RangeSum:
+    # Precompute P where P[i] = sum(nums[0..i-1]); P[0] = 0.
+    # Then sum(nums[l..r]) = P[r+1] - P[l] in O(1).
+    # Build O(n) once, answer each query O(1). The word
+    # "many queries" in a prompt is the prefix-sum tell.
+    def __init__(self, nums):
+        self.prefix = [0]
+        for x in nums:
+            self.prefix.append(self.prefix[-1] + x)
+
+    def query(self, left, right):  # inclusive bounds
+        return self.prefix[right + 1] - self.prefix[left]</pre>
+    </div>
+
+    <h2>How to spot it: the array tells</h2>
+    <ul>
+      <li>The input is a <strong>fixed-order sequence</strong> and you need <strong>positional
+      access</strong> — indices, neighbors (<code>a[i-1]</code>, <code>a[i+1]</code>), windows over
+      positions.</li>
+      <li>The prompt says <strong>"in-place"</strong> — that's the read/write-pointer pattern above,
+      O(1) extra space as a hard constraint.</li>
+      <li><strong>"Sorted array"</strong> plus a target or a rearrangement — binary search (L18) or
+      two pointers (L13).</li>
+      <li><strong>"Many queries"</strong> on a static array — preprocess once, answer O(1): prefix
+      sums (L16).</li>
+      <li>Order must be <strong>preserved</strong> while transforming — shifting cost is the analysis
+      the interviewer wants to hear.</li>
+    </ul>
+
+    <h2>The pitfalls (Python edition)</h2>
+    <ol class="steps">
+      <li><strong>Off-by-one at the borders</strong> — <code>range(n)</code> stops at n−1;
+      <code>a[i-1]</code> with i = 0 doesn't error, it silently wraps to the last element. The most
+      expensive bug in array code is the one that doesn't crash.</li>
+      <li><strong>Empty and single-element arrays</strong> — guard <code>if not nums</code> before any
+      loop that touches <code>a[i-1]</code>.</li>
+      <li><strong>Mutating while iterating</strong> — removing inside <code>for x in a</code> skips
+      elements; indices shift under your feet.</li>
+      <li><strong><code>pop(0)</code> / <code>insert(0, x)</code> are O(n)</strong> — if the ends are
+      hot, that's a deque (L4), not an array.</li>
+      <li><strong>Slicing copies</strong> — <code>a[i:j]</code> is Θ(j−i); inside a loop it's a hidden
+      quadratic (the L7 trap, wearing an array costume).</li>
+      <li><strong>Aliasing</strong> — <code>b = a</code> shares storage; <code>[[]] * n</code> shares
+      one inner list n times.</li>
+      <li><strong>Value vs. index</strong> — n is the <em>size</em>, not the max value (L7 pitfall,
+      still biting).</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> L2 (Strings — arrays of characters, with encoding
+      gotchas on top), L5 (Hash maps — arrays plus a hash function: O(1) by <em>value</em> instead of
+      by position), L13 (Two pointers — today's read/write pattern grows up), L16 (Prefix sums —
+      today's second technique, its own lesson), L18 (Binary search — only works because arrays give
+      O(1) mid access), L24+ (Trees — a binary heap is an array in disguise: children of i at
+      2i+1, 2i+2), L36 (DP — the DP table <em>is</em> an array).</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">Your thirty-second interview answer</span>
+      "An array is a contiguous block of fixed-size elements, so an index is arithmetic — base plus i
+      times element size — which is why access is Θ(1). The same contiguity makes insertion or
+      deletion at position k cost Θ(n−k), because everything after it shifts. Python lists are dynamic
+      arrays: append is O(1) amortized, since geometric resizing means n appends do under 3n total
+      work. The two load-bearing techniques are read/write pointers for in-place transforms and
+      prefix sums for O(1) range queries. Everything else in the track is either an array, an array
+      with extras, or something invented because arrays can't do one thing."
+    </div>
+
+    <p class="full-link">See the full presentation:
+      <a href="../../briefs/Arrays - The Foundation (2026-09-28 19.45.00).html">Arrays: The Foundation — Letter brief</a><br>
+      Deep dive: <a href="https://deep1blue.github.io/study-guides/arrays/">Arrays — study guide</a>
+      (layout diagrams, doubling math, pattern-spotting, self-test, references)
+    </p>
+    <p class="sig">— The Infra Notebook</p>
+
+  </div>
+</body>
+</html>
