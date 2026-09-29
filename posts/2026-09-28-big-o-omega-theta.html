@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Big-O, Ω, Θ: What Complexity Actually Measures — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+        <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Monday, September 28, 2026</p>
+    <h1>Big-O, Ω, Θ: What Complexity Actually Measures</h1>
+    <p class="subtitle">Complexity never measured seconds — it measures operations as a function of
+    input size. Three notations, three derivations, and the read-it-off-the-code skill every later
+    algorithms pattern is stated in.</p>
+    <div class="chips">
+      <span class="chip branch">Algorithms and data structures</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <svg viewBox="0 0 720 400" role="img" aria-label="Growth curves for O(1), O(log n), O(n), O(n log n), O(n squared)" style="width:100%;height:auto;display:block;border-radius:20px;background:#fbf6ec;">
+        <g font-family="Caveat, cursive" font-size="24">
+          <line x1="60" y1="345" x2="695" y2="345" stroke="#6f6555" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="60" y1="345" x2="60" y2="18" stroke="#6f6555" stroke-width="2.5" stroke-linecap="round"/>
+          <text x="700" y="372" font-size="20" fill="#6f6555" text-anchor="end">n (input size)</text>
+          <text x="34" y="180" font-size="20" fill="#6f6555" text-anchor="middle" transform="rotate(-90 34 180)">work</text>
+          <path d="M60,300 C250,298 450,302 690,299" fill="none" stroke="#8c8f77" stroke-width="3" stroke-linecap="round"/>
+          <text x="640" y="290" fill="#8c8f77">O(1)</text>
+          <path d="M60,300 C140,232 220,196 320,181 C450,163 580,156 690,151" fill="none" stroke="#6f6555" stroke-width="3" stroke-linecap="round"/>
+          <text x="600" y="140" fill="#6f6555">O(log n)</text>
+          <path d="M60,300 C270,255 480,205 690,150" fill="none" stroke="#b9863f" stroke-width="3" stroke-linecap="round"/>
+          <text x="620" y="185" fill="#b9863f">O(n)</text>
+          <path d="M60,300 C220,275 400,215 690,100" fill="none" stroke="#c58a6b" stroke-width="3" stroke-linecap="round"/>
+          <text x="560" y="205" fill="#c58a6b">O(n log n)</text>
+          <path d="M60,300 C200,296 340,270 470,210 C560,160 630,90 690,30" fill="none" stroke="#a13f04" stroke-width="4" stroke-linecap="round"/>
+          <text x="618" y="62" fill="#a13f04" font-size="26">O(n²)</text>
+          <line x1="200" y1="345" x2="200" y2="120" stroke="#6f6555" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.6"/>
+          <text x="200" y="105" font-size="20" fill="#6f6555" text-anchor="middle">at small n, everything looks the same</text>
+        </g>
+      </svg>
+      <figcaption>Lesson L1: the ladder — 1, log n, n, n log n, n².</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> nothing on the tree yet — L1 is the trunk. One-line
+      recap of what you already carry: from ML systems you already think in scaling curves (training
+      cost grows with data × epochs, never with how fast your laptop fan spins). Today that instinct
+      gets precise definitions and names.</p>
+    </div>
+
+    <h2>Intuition: growth, not speed</h2>
+    <p>Complexity never measured seconds. It measures <em>elementary operations as a function of
+    input size n</em>. Why not seconds? Because seconds depend on the machine, the language, the
+    compiler, the day of the week. Operation counts don't. Think of a recipe: "steps per serving" is
+    the algorithm; "how hot your oven runs" is the hardware. Interviewers ask about the recipe.</p>
+    <p>The reason the question matters at all: at small n, everything looks the same. Two Sum on ten
+    elements — brute force and hash map both finish before you blink. At n = 100,000, one takes
+    milliseconds and the other takes minutes. Big-O is the tool that sees that difference
+    <em>before you run the code</em>. It's the interview version of "will this scale."</p>
+
+    <h2>The three notations: ceiling, floor, sandwich</h2>
+    <p>Let f(n) be the exact operation count of your algorithm and g(n) a clean benchmark like n or n²:</p>
+    <ul>
+      <li><strong>O (big-O) — the ceiling.</strong> f(n) = O(g(n)) if f(n) ≤ c·g(n) for all n ≥ n₀.
+      "Never worse than this."</li>
+      <li><strong>Ω (big-Omega) — the floor.</strong> f(n) = Ω(g(n)) if f(n) ≥ c·g(n) eventually.
+      "At least this much work, no matter the input."</li>
+      <li><strong>Θ (big-Theta) — the sandwich.</strong> Both at once: c₁·g(n) ≤ f(n) ≤ c₂·g(n).
+      The growth rate is pinned, up to constants.</li>
+    </ul>
+    <p>One cultural note: everyone says "Big-O" when they mean Θ. "Merge sort is O(n log n)" — as a
+    pure ceiling that's weak (O(n²) is also true, and useless); the speaker means the tight bound. In
+    an interview, give the tight one even when you call it O.</p>
+
+    <h2>The math that matters: derive it, don't memorize it</h2>
+    <p>Three derivations cover ninety percent of interview analysis.</p>
+    <p><strong>1. Counting pairs — brute-force Two Sum.</strong> For each i, scan every j &gt; i.
+    Comparisons: (n−1) + (n−2) + … + 1 = n(n−1)/2 = ½n² − ½n. The entire justification for dropping
+    constants: n(n−1)/2 ÷ n² → ½ as n → ∞. The ratio settles to a constant, so the <em>shape</em> is
+    n². Constants and lower-order terms vanish in the limit — that's why we drop them.</p>
+    <p><strong>2. Halving — where log comes from.</strong> While loop: i = n, then n/2, n/4, … until
+    1. For n = 16: 16 → 8 → 4 → 2 → 1 — four steps, and 4 = log₂16. In general, log₂n iterations:
+    O(log n). The base never matters: logₐn = log₂n / log₂a — a constant factor, and constants die.</p>
+    <p><strong>3. The recurrence tree — T(n) = 2T(n/2) + O(n).</strong> Level 0 does n work; level 1
+    holds two nodes of n/2 — total n; level 2 holds four of n/4 — total n; … every one of the log₂n
+    levels does n work, so the total is n·log n = Θ(n log n). That's merge sort — and a preview of L16
+    (divide &amp; conquer).</p>
+
+    <h2>The code: Two Sum, two ways</h2>
+    <div class="math" style="text-align:left;font-size:1.05rem;">
+<pre style="margin:0;font-family:ui-monospace,Menlo,Consolas,monospace;">def two_sum_bruteforce(nums, target):
+    # (n-1) + (n-2) + ... + 1 = n(n-1)/2 comparisons
+    # -&gt; Theta(n^2) time, O(1) extra space.
+    n = len(nums)
+    for i in range(n):
+        for j in range(i + 1, n):
+            if nums[i] + nums[j] == target:
+                return [i, j]
+
+def two_sum_hashmap(nums, target):
+    # One pass: for each x ask "have I seen target - x?"
+    # Each dict probe O(1) average -&gt; Theta(n) time,
+    # Theta(n) space. Time-memory trade: we BUY the
+    # linear pass with linear space.
+    seen = {}
+    for i, x in enumerate(nums):
+        need = target - x
+        if need in seen:
+            return [seen[need], i]
+        seen[x] = i</pre>
+    </div>
+
+    <h2>How to spot it: reading complexity off code</h2>
+    <ul>
+      <li>Single loop over n → O(n). Nested loops both running to n → <em>multiply</em>: O(n²).
+      Triangle inner loop (j from i) → n(n−1)/2 → still O(n²).</li>
+      <li>Counter halved or doubled each step → O(log n).</li>
+      <li>Sequential blocks → <em>add</em>, keep the max.</li>
+      <li>Independent input sizes → name them: O(n·m), never O(n²).</li>
+      <li>Recursion → write the recurrence, draw the tree, multiply levels × work per level.</li>
+    </ul>
+    <p>The Python traps interviewers hide inside loops: <code>sorted()</code> is O(n log n);
+    <code>x in list</code> is O(n) (use a set); slicing copies in O(j−i); <code>list.pop(0)</code> and
+    <code>insert(0, x)</code> are O(n) (use <code>deque</code>); <code>s += c</code> in a loop is
+    O(n²) total (collect in a list, <code>"".join</code> once); <code>max()</code>/<code>sum()</code>
+    over n items is O(n) — calling it per iteration is the classic hidden quadratic.</p>
+
+    <h2>The 6 pitfalls</h2>
+    <ol class="steps">
+      <li><strong>Loose O instead of tight Θ</strong> — calling a linear scan "O(n²)" is technically
+      true and tells the interviewer nothing.</li>
+      <li><strong>Hidden O(n) inside loops</strong> — slicing, <code>pop(0)</code>, string concat,
+      <code>max()</code> per iteration quietly turn O(n) into O(n²).</li>
+      <li><strong>Average-case amnesia</strong> — dict/set are O(1) average, O(n) worst case. Default
+      to worst-case unless you say otherwise.</li>
+      <li><strong>Log-base pedantry</strong> — the base is a constant factor; don't spend interview
+      breath on it.</li>
+      <li><strong>Forgetting space</strong> — the recursion stack counts: naive Fibonacci recursion is
+      O(2ⁿ) time <em>and</em> O(n) space from call depth.</li>
+      <li><strong>n is the size, not the value</strong> — "loop to n" is O(n); "loop over the digits
+      of n" is O(log n).</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> L2 (amortized analysis — that hash-map "O(1)"
+      deserves a closer look at what average-case really means), L4 (constraint decoding: n ≤ 2×10⁵
+      <em>forces</em> O(n log n), and you can't read constraints without this language), L5–L6 (two
+      pointers and sliding window — the Θ(n) upgrades over today's brute force), L31 (1D DP — every
+      recurrence needs a tight analysis to justify it).</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">Your thirty-second interview answer</span>
+      "Big-O is a growth-rate claim about operation count, never a stopwatch. I name n, count the
+      dominant work as a function of n, and drop constants and lower-order terms because at scale the
+      fastest-growing term decides everything. O is the ceiling, Ω the floor, Θ the tight bound —
+      and I give the tight one. Two Sum: brute force makes n(n−1)/2 comparisons, Θ(n²); one hash-map
+      pass probes once per element, Θ(n) time for Θ(n) space. That trade is the whole pattern."
+    </div>
+
+    <p class="full-link">See the full presentation:
+      <a href="../../briefs/Big-O, Omega, Theta - What Complexity Actually Measures (2026-09-28 19.30.00).html">Big-O, Ω, Θ: What Complexity Actually Measures — Letter brief</a><br>
+      Deep dive: <a href="https://deep1blue.github.io/study-guides/big-o/">Big-O, Ω, Θ — study guide</a>
+      (bounds diagrams, recurrence tree, self-test, CLRS + NeetCode + Abdul Bari references)
+    </p>
+    <p class="sig">— The Infra Notebook</p>
+
+  </div>
+</body>
+</html>
