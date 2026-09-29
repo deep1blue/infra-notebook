@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFT Data: Why the Dataset Is the Product — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Tuesday, September 29, 2026</p>
+    <h1>SFT Data: Why the Dataset Is the Product</h1>
+    <p class="subtitle">Last night you drilled the SFT machine. This morning we look at what you feed it:
+    a thousand perfect examples beat fifty thousand sloppy ones, and one contaminated eval can lie
+    to your whole team for months.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-sft-data.webp" alt="Hand-drawn watercolor scene of a curator inspecting glowing dialogue scrolls with a magnifying glass, choosing one pristine scroll while rejected drafts pile in a wastebasket">
+      <figcaption>Lesson B2: the dataset is not fuel for the model — it is the model.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> B1 — SFT mechanics (instruction tuning, chat templates,
+      loss masking). One-line recap: SFT is <em>behavior cloning on assistant turns</em> — cross-entropy
+      computed only on response tokens — so it teaches the <em>shape</em> of assistance, not new
+      knowledge. That recap is now the whole lesson: because SFT clones behavior, the dataset you clone
+      from is the product.</p>
+    </div>
+
+    <h2>Intuition: ten perfect laps</h2>
+    <p>SFT is hiring a driving instructor for a student who already knows how cars work. Pretraining
+    read every driving manual ever written; it just needs ten perfect demo laps — <em>perfect</em>, not
+    a thousand sloppy ones, because a student copies whatever you demonstrate, flaws included.</p>
+    <p>The receipts: <strong>LIMA</strong> (Zhou et al., 2023) aligned a 65B-parameter LLaMA with exactly
+    <strong>1,000 hand-curated examples</strong> — no RLHF, no preference modeling — and in a controlled
+    human study its answers were equivalent to or preferred over GPT-4 in 43% of 300 test prompts, beating
+    models trained on 52× more data. <strong>AlpaGasus</strong> (Chen et al., 2023) did the mirror experiment:
+    it filtered Alpaca's 52k examples down to 9k with a strong LLM judge, and the 9k model
+    <strong>beat the full 52k on every test set</strong> while training 5.7× faster (14 minutes instead
+    of 80 on a 7B). The hypothesis that explains both: the <strong>Superficial Alignment Hypothesis</strong> —
+    pretraining wrote the library; SFT only builds the card catalog pointing at the right subdistribution
+    of formats.</p>
+
+    <h2>Mechanism: the four-stage curation pipeline</h2>
+    <ol class="steps">
+      <li><strong>Sourcing</strong> — where examples come from. <em>Human-authored</em> (LIMA's 250
+      researcher-written examples: the gold standard, and the most expensive), <em>distilled from stronger
+      models</em> (Alpaca's 52k from text-davinci-003), or <em>synthetic</em> (Self-Instruct, 2022: prompt a
+      model with 175 seed tasks, generate instructions, filter, repeat — 52k instructions from almost
+      nothing). Signature failures: humans don't scale, distillation inherits the teacher's flaws,
+      synthetic data compounds errors if you loop it.</li>
+      <li><strong>Filtering</strong> — score and cut. The AlpaGasus move: ask a strong model to rate each
+      example 1–5 and keep the top tier. The trap: <em>the filter's biases become your model's biases</em>
+      — filter with a verbose judge and you get a verbose model (gotcha #8 from the SFT lesson, wearing a
+      new costume). Filter for duplicates too: exact and near-dup removal, because duplicates overweight
+      themselves in the gradient.</li>
+      <li><strong>Decontamination</strong> — the eval-integrity step. If your eval questions appear in
+      training, your scores are fiction. The recipes: <em>n-gram overlap removal</em> (drop any training
+      doc sharing a 13-gram with an eval item), <em>canary strings</em> (grep your outputs for BIG-bench's
+      canary GUID), <em>temporal cutoffs</em> (train only on data older than the eval), <em>embedding
+      near-dup</em> against eval sets.</li>
+      <li><strong>Mix design and formatting</strong> — apply the chat template in the pipeline itself
+      (B1's silent killer returns: same template at train and serve, enforced where the data is built),
+      and balance the mixture: task diversity plus the <em>refusal boundary</em>. Too many refusal
+      examples → the over-refusal failure from last night's mock; too few → unsafe.</li>
+    </ol>
+
+    <h2>The math that matters</h2>
+    <p><strong>1. The normalization subtlety returns.</strong> Masked CE averages over <em>response tokens
+    only</em>, so long responses dominate the gradient mix. Worked example: a batch of 10 examples, nine
+    with 40-token responses, one with a 600-token response. Token total: 360 + 600 = 960. That single
+    long example owns <strong>62.5% of the gradient</strong>. If it's low-quality — and AlpaGasus found
+    Alpaca's 52k was full of exactly these — one bad example steers the batch.</p>
+    <div class="math">L = −(1/N<sub>resp</sub>) · Σ<sub>t ∈ response</sub> log p(x<sub>t</sub> | x<sub>&lt;t</sub>)<br>
+    <span style="font-size:1.05rem;color:var(--ink-soft)">same loss as B1 — the data decides what N<sub>resp</sub> means</span></div>
+    <p>The interview-deployable rule: <em>budget datasets in response tokens, not example counts</em>, and
+    monitor the token-length distribution, not the dataset size.</p>
+    <p><strong>2. Why the 13-gram decontamination threshold works.</strong> With a ~50k vocabulary, a random
+    13-gram collision has probability on the order of 50k<sup>−13</sup> — effectively zero. So any match is
+    real contamination, not noise: the threshold has essentially <em>no false positives by
+    construction</em>. That's why the industry converged on it.</p>
+    <p><strong>3. The weakest-link law of coverage.</strong> Your miss rate is set by your
+    <em>least-covered</em> capability. Ten thousand more coding examples don't fix zero medical-safety
+    examples. Diversity isn't a vibe — it's the max over capabilities of the uncovered fraction, and
+    LIMA's authors picked their 1,000 for prompt diversity first.</p>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> the RLHF pipeline next — preference data needs the same
+      curation discipline, and this SFT model becomes π_ref, so every bad example you let through is
+      inherited by the KL anchor. Then reward modeling: Bradley–Terry on dirty preference pairs is the same
+      disease one stage later. And decontamination gets its own node later: eval harnesses, where eval
+      integrity is the whole subject.</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">🎯 Your 30-second interview answer</span>
+      <p>"SFT data is the product. LIMA aligned a 65B model with a thousand curated examples because SFT
+      teaches the shape of assistance, not new knowledge — so you curate for diversity, response quality,
+      and honesty: filter hard, dedup, decontaminate against your evals with n-gram overlap, and budget by
+      response tokens rather than example counts, because masked loss lets long responses dominate the
+      gradient mix."</p>
+    </div>
+
+    <p class="full-link">
+      <a href="../../briefs/SFT Data - Why the Dataset Is the Product (2026-09-29 06.00.00).html">SFT Data: Why the Dataset Is the Product — Letter brief</a>
+      ·
+      <a href="https://deep1blue.github.io/study-guides/sft-data/">Deep-dive study guide</a>
+      ·
+      <a href="../curriculum.html">Full curriculum</a>
+    </p>
+
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
