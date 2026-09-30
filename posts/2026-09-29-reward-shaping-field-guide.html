@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reward Shaping for Agentic Models: The Industry Field Guide — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.4rem,6vw,3.5rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    h3 { font-size:1.25rem; color:var(--ink); margin:1.6rem 0 .35rem; }
+    h3 code { font-size:1.05rem; }
+    .tech p { margin:.3rem 0; }
+    .tech { margin-bottom:1.25rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.3rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Tuesday, September 29, 2026</p>
+    <h1>Reward Shaping for Agentic Models: The Industry Field Guide</h1>
+    <p class="subtitle">Fifteen shaping techniques actually used in production post-training —
+    ordered by strength of public evidence, each with the distortion it buys you.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-reward-shaping.webp" alt="Hand-drawn watercolor of an engineer tuning brass dials labeled length penalty, KL anchor, and correctness on a vintage reward machine, while a small robot trims an overlong thought-scroll with scissors">
+      <figcaption>Every dial you add reshapes what "good" means. Tune deliberately.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> the evening RL Q&amp;A — PPO, DPO, GRPO, RLVR —
+      and tonight's 5pm drill on the λ length penalty, which was already shaping in disguise.
+      This post is the reference doc for all of it.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong class="label">An honest note on ordering:</strong> there is no universal efficacy
+      ranking for shaping techniques — what works best depends on task, domain, and what you measure.
+      The tiers below are ordered by <em>strength of public evidence plus breadth of industry
+      adoption</em>, the closest honest proxy. Where a lab has publicly disclosed or credibly reported
+      usage, it's named; where details are proprietary, that's stated outright.</p>
+    </div>
+
+    <h2>The master equation</h2>
+    <p>Every entry below is a term in one sum:</p>
+    <div class="math">r<sub>shaped</sub>(x, y) = r<sub>task</sub>(x, y) + Σ<sub>i</sub> s<sub>i</sub>(x, y)</div>
+    <p>The founding result, and the only free lunch in the field:
+    <strong>potential-based shaping</strong> (Ng, Harada &amp; Russell, 1999) — adding
+    <code>γΦ(s′) − Φ(s)</code> — is the <em>only</em> shaping guaranteed not to change the optimal
+    policy. Every other term below deliberately redefines what "good" means. That redefinition is the
+    tool <em>and</em> the hazard.</p>
+
+    <h2>Tier 1 — Industry standard</h2>
+    <p>Disclosed by multiple labs, load-bearing in production post-training stacks.</p>
+
+    <div class="tech">
+      <h3>1. KL anchor <code>r − β·KL(π ‖ π<sub>ref</sub>)</code></h3>
+      <p><strong>Buys:</strong> keeps RL from destroying the SFT model — the policy can improve without
+      drifting into gibberish. Shaping as a leash.</p>
+      <p><strong>Used by:</strong> OpenAI's InstructGPT (2022); now universal across RLHF stacks.</p>
+      <p><strong>Distorts:</strong> timidity. Too-high β and the policy never explores far enough from SFT
+      for RL to matter; too-low β and the anchor is decorative.</p>
+    </div>
+
+    <div class="tech">
+      <h3>2. Verifiable outcome rewards (RLVR) <code>r = 1[y correct]</code></h3>
+      <p><strong>Buys:</strong> replaces a hackable learned reward with binary, rule-based correctness on
+      math/code. Kills reward hacking by construction — where correctness is checkable.</p>
+      <p><strong>Used by:</strong> DeepSeek-R1 (2025), paired with format rewards; the defining move of the
+      reasoning-model era.</p>
+      <p><strong>Distorts:</strong> confined to verifiable domains; models still hack the <em>verifier</em>
+      (exploiting weak tests, gaming exact-match).</p>
+    </div>
+
+    <div class="tech">
+      <h3>3. Length penalty <code>r − λ·tokens</code></h3>
+      <p><strong>Buys:</strong> prices every generated token — counters RL's tendency to reward-hack via
+      verbosity ("overthinking"). Training-time version of the inference bill.</p>
+      <p><strong>Used by:</strong> Meta's "thought compression" for Muse Spark (described in Meta's 2026
+      announcements); the efficient-reasoning literature broadly.</p>
+      <p><strong>Distorts:</strong> underthinking and truncation — or degenerate near-silence if applied
+      without gating on correctness. Gate it: penalize length only among correct answers, or hinge past a
+      budget.</p>
+    </div>
+
+    <div class="tech">
+      <h3>4. Format rewards <code>+b if structure matches</code></h3>
+      <p><strong>Buys:</strong> structural compliance — thinking tags, answer delimiters, tool-call syntax.
+      Cheap, verifiable, and surprisingly load-bearing for downstream parsing.</p>
+      <p><strong>Used by:</strong> DeepSeek-R1 (format + accuracy rewards).</p>
+      <p><strong>Distorts:</strong> well-formatted nonsense — the model learns the shape of compliance with
+      none of the substance.</p>
+    </div>
+
+    <h2>Tier 2 — Frontier-adopted</h2>
+    <p>Strong paper evidence, real deployment at frontier labs.</p>
+
+    <div class="tech">
+      <h3>5. Process rewards (PRMs) — dense step-level signal</h3>
+      <p><strong>Buys:</strong> densifies a sparse outcome reward into per-step feedback. The classic
+      shaping motivation: sparse rewards are brutal to learn from.</p>
+      <p><strong>Used by:</strong> OpenAI, "Let's Verify Step by Step" (Lightman et al., 2023).</p>
+      <p><strong>Distorts:</strong> step labels are expensive; the PRM itself gets hacked step-by-step; credit
+      assignment stays hard.</p>
+    </div>
+
+    <div class="tech">
+      <h3>6. Rejection sampling on trajectories — filter, then train</h3>
+      <p><strong>Buys:</strong> only the best sampled trajectories become training data. Simple, stable, no
+      value network, no KL tuning wars.</p>
+      <p><strong>Used by:</strong> industry-wide; Meta's Muse Spark 1.2 co-training on rejection-sampled
+      harness trajectories (reported 2026).</p>
+      <p><strong>Distorts:</strong> inherits the filter's biases wholesale; purely offline — zero exploration
+      beyond what the sampler already produces.</p>
+    </div>
+
+    <div class="tech">
+      <h3>7. DPO implicit reward <code>β·log(π/π<sub>ref</sub>)</code></h3>
+      <p><strong>Buys:</strong> the reward model never gets built — preferences optimize the policy directly
+      through the closed-form KL-constrained optimum. The 2023 simplification that ate RLHF's lunch for
+      offline tuning.</p>
+      <p><strong>Used by:</strong> Rafailov et al., 2023; the DPO/KTO/SimPO/ORPO family is industry-standard
+      offline preference tuning.</p>
+      <p><strong>Distorts:</strong> length bias (longer reads as better); offline distribution shift; the
+      R-DPO/SimPO patches exist precisely because of these distortions.</p>
+    </div>
+
+    <div class="tech">
+      <h3>8. Multi-objective scalarization <code>Σ w<sub>k</sub>·r<sub>k</sub></code></h3>
+      <p><strong>Buys:</strong> helpfulness, harmlessness, honesty (etc.) combined into one trainable scalar.
+      Every production assistant is a compromise; this is the compromise written down.</p>
+      <p><strong>Used by:</strong> Anthropic's assistant training; Constitutional AI lineage (Bai et al., 2022).</p>
+      <p><strong>Distorts:</strong> the weights are arbitrary trades, and optimizing a weighted sum Goodharts
+      each component — the policy games whichever objective is cheapest to satisfy.</p>
+    </div>
+
+    <div class="tech">
+      <h3>9. RLAIF / AI-judge rewards</h3>
+      <p><strong>Buys:</strong> preference labels at machine scale — a strong model judges outputs instead of
+      humans. Unblocks data volume that human labeling can't reach.</p>
+      <p><strong>Used by:</strong> Bai et al., 2022; AI judges now routine across labs.</p>
+      <p><strong>Distorts:</strong> the judge's biases become the model's biases — the same disease as
+      LLM-filtered SFT data, one stage later.</p>
+    </div>
+
+    <h2>Tier 3 — Real usage, narrower evidence</h2>
+    <p>Deployed or credibly reported; thinner public detail.</p>
+
+    <div class="tech">
+      <h3>10. Self-rewarding LMs — the model judges itself</h3>
+      <p><strong>Buys:</strong> iterative self-improvement: the model generates, judges, and trains on its own
+      outputs, bootstrapping past its training data.</p>
+      <p><strong>Used by:</strong> Meta (Yuan et al., 2024).</p>
+      <p><strong>Distorts:</strong> judge and policy co-adapt into self-congratulation loops; needs held-out
+      grounding or the model just learns to flatter itself.</p>
+    </div>
+
+    <div class="tech">
+      <h3>11. Uncertainty-penalized rewards — distrust what the RM is unsure about</h3>
+      <p><strong>Buys:</strong> penalizes regions where the reward model has high variance or ensemble
+      members disagree — a direct anti-hacking defense.</p>
+      <p><strong>Used by:</strong> various labs' anti-hacking stacks; exact production recipes rarely disclosed.</p>
+      <p><strong>Distorts:</strong> over-conservatism — the policy avoids anything novel; ensembles are
+      expensive at RL scale.</p>
+    </div>
+
+    <div class="tech">
+      <h3>12. Tool-trajectory rewards — reward intermediate tool success</h3>
+      <p><strong>Buys:</strong> in agentic rollouts, intermediate tool calls get their own reward signal
+      instead of one sparse terminal reward. Densification for the agentic setting.</p>
+      <p><strong>Used by:</strong> coding-agent training; reported in harness co-training setups.</p>
+      <p><strong>Distorts:</strong> rewards tool <em>use</em>, not task success — agents learn to call tools
+      theatrically without advancing the goal.</p>
+    </div>
+
+    <div class="tech">
+      <h3>13. Budget / hinge shaping <code>−λ·max(0, tokens − budget)</code></h3>
+      <p><strong>Buys:</strong> the length penalty only bites past a budget — free reasoning up to the
+      allowance, priced after. L1-style variants control length nearly exactly.</p>
+      <p><strong>Used by:</strong> efficient-reasoning research; some production inference-budget controls.</p>
+      <p><strong>Distorts:</strong> cliff effects at the budget boundary; genuinely hard problems get starved
+      exactly when they need tokens most.</p>
+    </div>
+
+    <h2>Tier 4 — Theory and frontier</h2>
+    <p>Know these for depth; rarely the thing that ships.</p>
+
+    <div class="tech">
+      <h3>14. Potential-based shaping <code>γΦ(s′) − Φ(s)</code></h3>
+      <p><strong>Buys:</strong> the only shaping with a mathematical guarantee of preserving the optimal
+      policy. The reference point every other term is judged against.</p>
+      <p><strong>Used by:</strong> Ng, Harada &amp; Russell (1999); honored more in citation than in
+      production LLM code.</p>
+      <p><strong>Distorts:</strong> nothing, by construction — which is why it's here and not in Tier 1.
+      Designing good potentials for language is genuinely hard.</p>
+    </div>
+
+    <div class="tech">
+      <h3>15. Exploration bonuses — curiosity</h3>
+      <p><strong>Buys:</strong> rewards novelty to force exploration in sparse-reward settings.</p>
+      <p><strong>Used by:</strong> robotics and game RL; rare in LLM post-training, where SFT already provides
+      broad coverage.</p>
+      <p><strong>Distorts:</strong> noisy, sample-inefficient; the policy explores curiosities instead of the
+      task.</p>
+    </div>
+
+    <h2>The Staff checklist</h2>
+    <p>How senior engineers actually wield this list:</p>
+    <ol class="steps">
+      <li><strong>Gate every penalty on task success</strong> — correctness-gating or hinges. An ungated
+      penalty always has a degenerate optimum (silence, timidity, format without content).</li>
+      <li><strong>Add shaping terms one at a time and ablate.</strong> Two new terms interacting is how you
+      spend a month debugging a reward function instead of a model.</li>
+      <li><strong>Watch the distortion metrics, not just the reward curve.</strong> Track response length, KL
+      distance from π<sub>ref</sub>, format compliance, <em>and</em> task accuracy separately. The reward
+      going up while length collapses is a failure wearing a success costume.</li>
+      <li><strong>Write down what you traded.</strong> Shaping redefines "good" — document each term's
+      intended distortion so the next engineer (or your future self) knows which behaviors were bought, not
+      discovered.</li>
+    </ol>
+
+    <div class="interview">
+      <span class="label">30-second interview answer</span>
+      <p>"Reward shaping modifies the reward to make learning tractable — the KL anchor, length penalties,
+      verifiable rewards, process rewards, format bonuses. Only potential-based shaping preserves the optimal
+      policy; everything else deliberately redefines 'good,' so each term buys a distortion: length penalties
+      buy underthinking, the KL anchor buys timidity, format rewards buy well-formatted nonsense. The Staff
+      skill is gating penalties on correctness and watching the distortion metrics, not just the reward
+      curve."</p>
+    </div>
+
+    <h2>Connects to</h2>
+    <p><strong>B3 — RLHF pipeline:</strong> this is where every term above gets wired into PPO/GRPO/RLOO —
+    the KL anchor and length penalty live inside the training loop, not beside it.
+    <strong>B4 — reward modeling:</strong> the reward being shaped has to be built first; Bradley–Terry on
+    dirty preference pairs is the same disease one stage earlier.
+    <strong>E2 — eval harnesses:</strong> decontamination and held-out evals are how you catch the
+    distortions these terms introduce.</p>
+
+    <p class="full-link"><a href="../curriculum.html">← Full curriculum: the Staff AI/ML interview map</a></p>
+
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
