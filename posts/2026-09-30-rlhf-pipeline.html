@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RLHF: Teaching the Model What Humans Want — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Wednesday, September 30, 2026</p>
+    <h1>RLHF: Teaching the Model What Humans Want</h1>
+    <p class="subtitle">Yesterday you saw SFT's imitation ceiling. Today the ceiling becomes the floor:
+    humans are slow writers but fast judges — so rank pairs of outputs, compress the rankings into a
+    reward function, and optimize the policy against it at GPU speed.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-rlhf-pipeline.webp" alt="Hand-drawn anime illustration of a three-stage machine: an SFT scroll feeding into a judge's scales weighing two answer scrolls, feeding into a looping policy-optimization cycle, with an anchor and chain tethering the last stage to the first">
+      <figcaption>Lesson B3: compress human judgment into a function, then optimize against it — carefully.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> B1 — SFT mechanics. Recap: SFT is <em>behavior cloning with
+      masked cross-entropy on assistant turns</em> — it teaches <em>what good looks like</em>, but it cannot
+      teach <em>which of two good answers a human prefers</em>. That gap is the entire reason RLHF exists.
+      B2 — SFT data: demonstrations cost human-hours to write (LIMA's 1,000 took weeks of researcher time),
+      while ranking two model outputs takes a labeler seconds. That cost asymmetry is the economic engine of
+      today's lesson. Spaced retrieval, as promised: B1's SFT checkpoint gets a second job today as π_ref,
+      the reference policy the RL objective is anchored to.</p>
+    </div>
+
+    <h2>Intuition: the imitation ceiling, then the floor</h2>
+    <p>SFT maximizes the likelihood of demonstrated tokens. Show it two different good answers to the same
+    prompt and it can only average into them — there is no channel for "humans prefer A over B." SFT teaches
+    format, not preference: the Superficial Alignment Hypothesis, one stage later.</p>
+    <p>But humans are noisy writers and reliable comparators. Asking a labeler to write the perfect answer
+    costs minutes; asking them to rank four to nine candidate answers costs seconds and produces <em>more</em>
+    signal per dollar. The InstructGPT receipts: <strong>~13k hand-written demonstrations</strong> for the SFT
+    stage, <strong>~33k pairwise comparisons</strong> for the reward model. Preference data dwarfed
+    demonstration data — because ranking scales and writing doesn't.</p>
+    <p>The central trick: a reward model is a <em>preference compressor</em>. Train it once on tens of
+    thousands of rankings, then it scores millions of rollouts for free, overnight, at GPU speed. RLHF =
+    compress human judgment into r<sub>θ</sub>, then optimize π against r<sub>θ</sub>. Sample prompt,
+    generate, score, update, repeat — a million tiny judgments a human never has to make.</p>
+
+    <h2>Mechanism: the three stages</h2>
+    <ol class="steps">
+      <li><strong>SFT.</strong> Masked cross-entropy on demonstrations gives π_SFT. This checkpoint now has
+      two jobs: it initializes the policy π<sub>φ</sub>, <em>and</em> it becomes π_ref, the reference model
+      the RL objective anchors to. Keep that anchor in mind — it is the most important model in the
+      room.</li>
+      <li><strong>The reward model.</strong> Collect preference triples (x, y<sub>w</sub>, y<sub>l</sub>): a
+      prompt plus a winning and a losing response. Assume Bradley–Terry:
+      P(y<sub>w</sub> ≻ y<sub>l</sub> | x) = σ(r<sub>θ</sub>(x,y<sub>w</sub>) − r<sub>θ</sub>(x,y<sub>l</sub>))
+      — the probability the human prefers the winner is the sigmoid of the score margin. Train by maximizing
+      that log-probability over the dataset: L<sub>BT</sub> = −E[log σ(Δr)]. Architecture: the SFT backbone
+      with a scalar head — take the final token's hidden state, one linear layer, one number. The warning
+      that matters: <em>only margins mean anything</em>. Rewards are defined up to an additive constant, so
+      raw scores are not comparable across prompts — an interview trap worth remembering.</li>
+      <li><strong>PPO.</strong> The loop: sample a prompt x → roll out a response y ~ π<sub>φ</sub> (at
+      sampling temperature, because diversity is the training signal) → score it with r<sub>θ</sub> →
+      estimate advantages with the learned value head → update the policy with the clipped surrogate
+      L<sup>CLIP</sup> = E[min(ρÂ, clip(ρ, 1−ε, 1+ε)Â)], where ρ = π<sub>φ</sub>/π<sub>old</sub> keeps steps
+      small and safe. And the full objective carries the anchor:
+      J(φ) = E[r<sub>θ</sub>(x,y)] − β·KL(π<sub>φ</sub>(·|x) ‖ π_ref(·|x)). InstructGPT ran this over ~31k
+      prompts with β = 0.02.</li>
+    </ol>
+
+    <h2>The KL term: a trust region, not a regularizer</h2>
+    <p>Drop the KL penalty and the policy optimizes the <em>proxy</em> as hard as it can. Proxies have blind
+    spots, and a strong optimizer finds every one of them: responses get verbose, hedged, sycophantic,
+    confidently wrong — <strong>reward hacking</strong>, Goodhart's law wearing a lab coat. The KL penalty
+    is not a regularizer; it is a <em>trust region on the reward model's domain of competence</em>. The SFT
+    checkpoint is the territory where the reward model's judgments were earned; β sets how far the policy
+    may wander from home. Without rent, the policy moves into the wilderness where the judge is blind and
+    scores are hallucinations. When an interviewer asks "why the KL penalty," that sentence is your
+    answer.</p>
+
+    <h2>The math that matters</h2>
+    <p><strong>1. The Bradley–Terry loss</strong> — cross-entropy over the margin's sigmoid:</p>
+    <div class="math">L<sub>BT</sub> = −E[log σ(r<sub>θ</sub>(x,y<sub>w</sub>) − r<sub>θ</sub>(x,y<sub>l</sub>))]</div>
+    <p><strong>2. The RL objective with the anchor</strong> — KL estimated per-token from the rollouts
+    themselves:</p>
+    <div class="math">J(φ) = E[r<sub>θ</sub>] − β·KL(π<sub>φ</sub> ‖ π<sub>ref</sub>)<br>
+    <span style="font-size:1.05rem;color:var(--ink-soft)">KL = E<sub>y~π<sub>φ</sub></sub>[log π<sub>φ</sub>(y|x) − log π<sub>ref</sub>(y|x)]</span></div>
+    <p><strong>3. The InstructGPT receipts</strong> — 13k demonstrations → SFT; 33k comparisons → reward
+    model; 31k prompts → PPO; β = 0.02. The ratio to remember is <strong>13k : 33k</strong>: preference data
+    outscored demonstration data more than two-to-one, because ranking is the scalable human input.</p>
+
+    <h2>Failure modes preview — tonight's drill territory</h2>
+    <p><strong>Verbosity bias</strong> (longer answers score higher for no reason),
+    <strong>distribution shift</strong> (the policy explores where the reward model never trained), and
+    <strong>labeler disagreement</strong> (whose preferences are these, exactly?). And remember last night's
+    reward-shaping field guide — length penalties, KL terms, verifiable rewards: that guide is the catalog
+    of countermeasures for exactly this fight, and B4 gives shaping its own section.</p>
+
+    <div class="callout">
+      <p><strong class="label">Connects to:</strong> B4 — reward modeling under the hood: Bradley–Terry
+      mechanics, the reward-hacking taxonomy, and the shaping field guide as the actual defense manual.
+      B5 — PPO mechanics: the clipped objective, the value head, GAE. B7 — GRPO and RLOO: where
+      RL-for-reasoning diverged from this exact pipeline. B8 — RL infra: rollout workers, async generation,
+      vLLM in the loop — the loop you just learned is only as fast as its sampling, so the infra <em>is</em>
+      the algorithm.</p>
+    </div>
+
+    <div class="interview">
+      <span class="label">🎯 Your 30-second interview answer</span>
+      <p>"Walk me through the RLHF pipeline." → "Three stages. First, supervised fine-tune to get a competent
+      assistant — that checkpoint becomes both the starting policy and the KL anchor. Second, have humans rank
+      pairs of model outputs — ranking is far cheaper than writing demonstrations — and train a reward model on
+      those rankings with the Bradley–Terry loss so it predicts human preference. Third, run PPO: sample
+      prompts, generate rollouts, score them with the reward model, and update the policy to maximize reward
+      minus a KL penalty against the SFT model. The KL term is the load-bearing part — without it the policy
+      games the reward model, which is reward hacking. With it, you get a model optimized for what humans
+      prefer, not just what it was shown."</p>
+    </div>
+
+    <p class="full-link">
+      <a href="../../briefs/RLHF - Teaching the Model What Humans Want (2026-09-30 06.00.00).html">RLHF: Teaching the Model What Humans Want — Letter brief</a>
+      ·
+      <a href="https://deep1blue.github.io/study-guides/rlhf-pipeline/">Deep-dive study guide</a>
+      ·
+      <a href="../curriculum.html">Full curriculum</a>
+    </p>
+
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
