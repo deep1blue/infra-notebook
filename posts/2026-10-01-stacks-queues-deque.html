@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stacks &amp; Queues: LIFO, FIFO, and the Deque — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    pre { background:#2b2620; color:#f3ead8; padding:1.1rem 1.3rem; border-radius:12px;
+          overflow-x:auto; font-size:.95rem; line-height:1.7; }
+    table { border-collapse:collapse; width:100%; margin:1.5rem 0; font-size:1.02rem; }
+    th { border-bottom:2px solid var(--accent); text-align:left; padding:.55rem .6rem;
+         font-weight:600; }
+    td { border-bottom:1px solid var(--line); color:var(--ink-soft); padding:.55rem .6rem; }
+    tr:last-child td { border-bottom:0; }
+    td.num { font-variant-numeric:tabular-nums; text-align:right; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Thursday, October 1, 2026</p>
+    <h1>Stacks &amp; Queues: LIFO, FIFO, and the Deque</h1>
+    <p class="subtitle">Stacks and queues are a discipline, not a data structure. A Python list
+    already is a stack — but it is <em>not</em> a queue, and the cost of forgetting that is
+    the #1 hidden-quadratic trap in Python interviews. This lesson derives why, meets
+    <code>collections.deque</code>, and solves valid parentheses.</p>
+    <div class="chips">
+      <span class="chip branch">Algorithms and data structures</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-stacks-queues.webp" alt="Hand-drawn illustration of a cafeteria tray dispenser and a checkout line, one hand pressing down a stack of trays, another queue of figures waiting at a counter">
+      <figcaption>Lesson L4 · the discipline, not the data structure: the tray dispenser and the checkout line.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <p><strong class="label">Builds on:</strong> L1 (Arrays: The Foundation) — the exact idea reused
+      is the doubling argument: n appends cost ~2n total, so appends at the <em>end</em> of a list are
+      amortized O(1). That argument now explains why a list makes a perfect stack — and why the same
+      list is a terrible queue. L3 (Linked lists) — the reused idea is that constant-time access at
+      <em>both ends</em> needs a two-ended structure, which is exactly what
+      <code>collections.deque</code> is under the hood: a doubly-linked list of blocks. L7's
+      complexity vocabulary prices every claim below.</p>
+    </div>
+
+    <h2>Intuition: the tray dispenser and the checkout line</h2>
+    <p>A <strong>stack</strong> is a cafeteria tray dispenser, an undo history, a browser back
+    button. You only ever touch the <strong>top</strong>. Last in, first out.</p>
+    <p>A <strong>queue</strong> is a checkout line, a printer spool, an ER waiting room. You arrive
+    at the <strong>back</strong>, you leave from the <strong>front</strong>. First in, first
+    out.</p>
+    <p>A <strong>deque</strong> (double-ended queue, pronounced "deck") does both: add and remove
+    at either end.</p>
+    <p>The punchline up front: stacks and queues are a <em>discipline</em>, not a data structure. In
+    Python, a plain <code>list</code> <strong>is</strong> a stack — but it is <strong>not</strong> a
+    queue. Understanding why is understanding the machine underneath your code.</p>
+
+    <h2>Mechanism: why a list stacks but doesn't queue</h2>
+    <p><strong>A list is a stack.</strong> <code>append</code> and <code>pop()</code> touch only the
+    end of the list. End-append is amortized O(1) thanks to L1's doubling — n appends cost ~2n total
+    machine operations, so each costs O(1) on average. The top of the stack is
+    <code>s[-1]</code>. No import needed, no ceremony: every Python list already implements the
+    stack discipline.</p>
+    <p><strong>Why a list fails as a queue:</strong> <code>pop(0)</code> must shift every remaining
+    element one slot left. In a contiguous array that is n−1 machine-word moves in a single
+    <code>memmove</code> — Θ(n) per dequeue. The same holds for <code>insert(0, x)</code>, which
+    shifts everything right to make room.</p>
+
+    <div class="math">
+      dequeue k costs (n − k) word moves<br>
+      total for n dequeues = Σ<sub>k=0</sub><sup>n−1</sup> (n − k) = n(n+1)/2 = <strong>Θ(n²)</strong>
+    </div>
+
+    <p>The derivation is one line of algebra: the first dequeue shifts n−1 elements, the second
+    n−2, and so on down to the last dequeue shifting nothing. The sum of 1 + 2 + … + n is
+    n(n+1)/2. Keep that sum in your pocket — it is the signature of the hidden-quadratic.</p>
+    <p><strong>Concrete:</strong> 100,000 enqueues + dequeues via <code>list.pop(0)</code> ≈
+    5×10⁹ word moves — seconds to TLE in CPython. Via <code>deque.popleft()</code> ≈ 100k
+    constant-time ops — milliseconds. That gap is the difference between AC and TLE, and it is
+    <em>the</em> classic hidden-cost interview trap.</p>
+
+    <h2>The deque: O(1) at both ends</h2>
+    <p>CPython's <code>collections.deque</code> is a doubly-linked list of <strong>blocks</strong>
+    — each block holds up to 64 pointers. <code>append</code>/<code>appendleft</code> fill the
+    tail/head block or allocate a new one; <code>pop</code>/<code>popleft</code> do the reverse.
+    All O(1), no shifting ever — this is L3's pointer surgery scaled up: constant-time work at
+    both ends because nothing ever has to move.</p>
+    <p>The tradeoff is per-block allocation overhead. A deque of 3 elements can occupy a full
+    64-slot block, and indexing <code>d[i]</code> is O(1) but slower than a list's — a block hop,
+    not pointer arithmetic. Don't reach for a deque when you need random access; reach for it when
+    the workload lives at the ends.</p>
+    <p>Spaced retrieval, two for one: L1's doubling recap explains the list-as-stack, and L7's
+    Big-O-as-growth-rate lens is exactly what let us price Θ(n²) against Θ(n) and see that the
+    choice of <em>which end you touch</em> is a complexity decision, not a style preference.</p>
+
+    <h2>The code: valid parentheses (LeetCode 20)</h2>
+    <p>"Given a string containing just the characters ()[]{} determine if the input string is
+    valid." Why it's canonical: nesting <em>is</em> a stack — each closer must match the most
+    recent unmatched opener, which is precisely LIFO.</p>
+    <pre>def isValid(s: str) -> bool:
+    pairs = {')': '(', ']': '[', '}': '{'}  # closer -> expected opener
+    stack: list[str] = []
+    for ch in s:
+        if ch in pairs:                       # a closing bracket
+            if not stack or stack.pop() != pairs[ch]:
+                return False                  # mismatch, or nothing to match
+        else:
+            stack.append(ch)                   # opener goes on the stack
+    return not stack                           # valid only if nothing is left over</pre>
+    <p><strong>Complexity:</strong> each character is pushed at most once and popped at most once
+    → 2n stack ops → <strong>O(n) time</strong>. Worst case the stack holds all n openers →
+    <strong>O(n) space</strong> (e.g. <code>"((((…"</code>).</p>
+    <p><strong>Walkthrough</strong> on <code>"([])"</code>: push <code>(</code>, push
+    <code>[</code>, see <code>]</code> → pop <code>[</code> ✓, see <code>)</code> → pop
+    <code>(</code> ✓, stack empty → True. On <code>"([)]"</code>: push <code>(</code>, push
+    <code>[</code>, see <code>)</code> → pop <code>[</code> ✗ mismatch → False.</p>
+
+    <h2>How to spot the pattern (in a fresh problem statement)</h2>
+    <ul>
+      <li>"most recent", "last unmatched", "nested", "reverse the order of processing",
+      undo/back-button/call-return → <strong>stack</strong>.</li>
+      <li>"fair order", "first come first served", "level by level", "process in arrival order",
+      task scheduling, BFS frontiers → <strong>queue</strong>.</li>
+      <li>"need both ends" — add to front, remove from back (sliding-window maximum is next
+      month's L20) → <strong>deque</strong>.</li>
+      <li>Tell-tale sentence shape: <em>"X must be resolved before the Y that was waiting before
+      it"</em> → stack. <em>"Handle in the order they arrive"</em> → queue.</li>
+    </ul>
+
+    <h2>The pitfalls (Python edition)</h2>
+    <ol class="steps">
+      <li><strong><code>list.pop(0)</code> / <code>list.insert(0, x)</code> in a loop</strong> — hidden
+      O(n) per op → O(n²) total. The #1 Python interview trap; use
+      <code>deque.popleft()</code>.</li>
+      <li><strong>Popping an empty container</strong> — <code>"]("</code> crashes on
+      <code>stack.pop()</code> if you don't guard <code>if not stack</code>.</li>
+      <li><strong>Forgetting the leftover check</strong> — <code>"((("</code> is invalid;
+      <code>return not stack</code> catches it.</li>
+      <li><strong>Recursion is a hidden stack with a ceiling</strong> — Python's default recursion
+      limit is 1000 frames; deep nesting → <code>RecursionError</code>. An explicit stack is the
+      fix (previews L8 Recursion).</li>
+      <li><strong><code>queue.Queue</code> is for threads, not interviews</strong> — it's
+      lock-guarded and slower; in coding rounds use <code>collections.deque</code>.</li>
+      <li><strong>deque indexing is not free-ish</strong> — O(1) but slower than a list's; don't
+      reach for deque when you need random access.</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong class="label">Follow-up teaser (interview-grade):</strong> LeetCode 232,
+      <em>Implement Queue using Stacks</em>: two stacks; push to <code>in</code>, pop/peek from
+      <code>out</code>, transfer only when <code>out</code> is empty. Each element moves at most
+      twice → <strong>amortized O(1)</strong> per operation. Mention it by name in the round —
+      interviewers read that as depth.</p>
+    </div>
+
+    <h2>Connects to</h2>
+    <p><strong>L20</strong> (Monotonic stacks &amp; deque patterns) — this lesson's machinery
+    weaponized: next-greater-element, sliding-window maximum via deque. <strong>L32</strong>
+    (BFS/DFS) — the queue <em>is</em> the BFS frontier; the stack <em>is</em> iterative DFS.
+    Today's discipline becomes tomorrow's traversal. <strong>L8</strong> (Recursion) — the call
+    stack is literally a stack; today's LIFO discipline explains the call-stack mechanism.
+    <strong>L23</strong> (Design: LRU cache) — a doubly-linked list + hash map: the deque idea
+    (O(1) at both ends) upgraded into a design problem.</p>
+
+    <div class="interview">
+      <span class="label">Your 30-second interview answer</span>
+      "Stacks and queues are discipline, not data structure. A Python list gives you a stack for
+      free — append and pop off the end are amortized O(1). It does not give you a queue: pop(0)
+      shifts everything left, so n dequeues cost Θ(n²). That's why collections.deque exists — a
+      linked list of 64-slot blocks, O(1) on both ends. The interview tells: nested or
+      last-unmatched → stack; arrival order or level-by-level → queue. The classic demo is valid
+      parentheses: push openers, pop on closers, every character handled at most once, so O(n)
+      time and O(n) space."
+    </div>
+
+    <div class="full-link">
+      <a href="../briefs/Stacks%20&%20Queues%20-%20LIFO,%20FIFO,%20and%20the%20Deque%20(2026-10-01%2012.21.00).html">Full Letter brief →</a><br><br>
+      <a href="https://deep1blue.github.io/study-guides/stacks-queues/">Deep-dive study guide →</a><br><br>
+      <a href="../leetcode-curriculum.html">← Full coding-round curriculum</a>
+    </div>
+
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
