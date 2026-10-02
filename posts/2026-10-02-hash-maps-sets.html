@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hash Maps &amp; Sets: The O(1) Workhorse — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    pre { background:#2b2620; color:#f3ead8; padding:1.1rem 1.3rem; border-radius:12px;
+          overflow-x:auto; font-size:.95rem; line-height:1.7; }
+    table { border-collapse:collapse; width:100%; margin:1.5rem 0; font-size:1.02rem; }
+    th { border-bottom:2px solid var(--accent); text-align:left; padding:.55rem .6rem;
+         font-weight:600; }
+    td { border-bottom:1px solid var(--line); color:var(--ink-soft); padding:.55rem .6rem; }
+    tr:last-child td { border-bottom:0; }
+    td.num { font-variant-numeric:tabular-nums; text-align:right; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+  <p class="dateline">Friday, October 2, 2026</p>
+  <h1>Hash Maps &amp; Sets: The O(1) Workhorse</h1>
+  <p class="subtitle">Lesson L5 · the card catalog — every name has a slot, but two names can land on the same one</p>
+  <div class="chips">
+    <span class="chip branch">Algorithms and data structures</span>
+    <span class="chip type-lesson">Lesson</span>
+  </div>
+  <div class="figure">
+    <div class="tape"></div>
+    <img src="../briefs/media/hero-hashmaps.webp" alt="Hand-drawn illustration of a library card catalog with a brass funnel hashing labeled cards into numbered slots">
+    <figcaption>Every name has a slot. Two names can pick the same one — that's the birthday paradox, not a bug.</figcaption>
+  </div>
+
+  <div class="callout">
+    <p><strong class="label">Builds on</strong></p>
+    <p><strong>L1 (Arrays: The Foundation)</strong> — <code>a[i]</code> is O(1) because the address is <em>computed</em>, never searched (<code>base + i × wordsize</code>). The hash map keeps that contract and generalizes the key: <code>slot = hash(key) mod m</code> is still arithmetic, still O(1).</p>
+    <p><strong>L2 (Strings)</strong> — strings are the canonical keys, and the hashability contract explains why <code>str</code> and <code>tuple</code> hash but <code>list</code> does not: a key's hash must not change while it lives in the table, so keys must be immutable.</p>
+    <p><strong>L7 (Big-O)</strong> — today's vocabulary cashes in the <em>average vs. worst case</em> distinction: hash maps are O(1) <em>expected</em>, Θ(n) <em>adversarial</em>. Say which one you mean.</p>
+  </div>
+
+  <h2>The intuition: a card catalog made of wood</h2>
+  <p>You walk in with a title — the librarian does not scan every drawer. She knows a rule (the hash function) that turns any title into a drawer number, walks straight to it, and opens it. That's the whole data structure: <strong>a rule that converts names into slot numbers, plus a plan for when two names pick the same slot.</strong></p>
+  <p>A hash function takes any key and returns an integer. Three requirements: <strong>deterministic</strong> (same key, same hash — always), <strong>fast</strong>, and <strong>uniform</strong> (keys spread evenly across slots). The contract is one-directional: equal keys → equal hashes. Unequal keys may share a hash — that's a collision, and it's arithmetic, not a bug.</p>
+
+  <h2>The math: collisions arrive early</h2>
+  <p>This is the birthday bound, and it's worth deriving once. The probability that n random keys land in n distinct slots of m:</p>
+  <div class="math">P(no collision) = (1 − 1/m)(1 − 2/m)…(1 − (n−1)/m) ≈ e<sup>−n²/2m</sup></div>
+  <p>Set that to 1/2 and solve: <strong>n ≈ √(2m ln 2) ≈ 1.18√m</strong>. With 100 slots, ~12 random keys give even odds of a collision. Collisions aren't edge cases — they're the normal weather, and the table is engineered around them.</p>
+
+  <h2>The mechanism: chaining, probing, and what Python actually does</h2>
+  <p>Two classical answers. <strong>Separate chaining:</strong> each slot holds a linked list; colliding keys line up. <strong>Open addressing:</strong> no lists — if the slot is taken, <em>probe</em> for the next free one (linear probing walks +1, +2, …; quadratic and double hashing probe in smarter strides).</p>
+  <p>CPython's <code>dict</code> is open addressing with a twist: the table size is always a power of two, so the slot is <code>hash(key) &amp; (m−1)</code> — a bitmask instead of a modulo — and collisions are resolved by a perturbation probe sequence that pseudo-randomizes the walk. It caches each key's hash in the table, so lookups never re-hash. And it keeps the <strong>load factor α = n/m at or below 2/3</strong>: more than two-thirds full, and it doubles. A <code>set</code> is the same table with no values — keys only, a membership oracle.</p>
+
+  <h2>The math that matters: why "expected O(1)" is honest</h2>
+  <p>Assume <strong>simple uniform hashing</strong>: every key lands on every slot with equal probability. With load factor α = n/m, a lookup walks on average <strong>1 + α probes</strong> — the slot itself plus the chain behind it. CPython doubles at α = 2/3, so lookups cost ~1.7 probes on average, forever, no matter how large n grows. <em>That's</em> what "O(1) average" means: the cost is bounded by a constant because α is bounded by a constant.</p>
+  <p>Inserts stay cheap for the same reason appends did in L1: <strong>doubling</strong>. Resizing an n-element table costs O(n), but it happens only at sizes 1, 2, 4, 8, … — the same Σ2<sup>k</sup> ≈ 2n argument from L1, so inserts are amortized O(1). Three corollaries for the round:</p>
+  <ol class="steps">
+    <li>Worst case is still Θ(n) if an adversary feeds colliding keys — which is why Python <strong>randomizes string hashing</strong> (SipHash, per-process seed) after the hash-flooding DoS attacks of 2011–12.</li>
+    <li>Hashing a string costs O(length of the key) — the "O(1)" hides a linear scan of the key.</li>
+    <li>Never persist a hash across runs — <code>PYTHONHASHSEED</code> randomization means <code>hash("ana")</code> differs every process.</li>
+  </ol>
+  <table>
+    <thead><tr><th>Operation</th><th>Average</th><th>Worst case</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Lookup <code>d[k]</code> / <code>k in s</code></td><td class="num">O(1)</td><td class="num">Θ(n)</td><td>1 + α expected probes; adversary chains everything</td></tr>
+      <tr><td>Insert / delete</td><td class="num">O(1) amortized</td><td class="num">O(n)</td><td>doubling resize (L1's Σ2<sup>k</sup> argument, reused)</td></tr>
+      <tr><td><code>x in my_list</code> (the trap)</td><td class="num">Θ(n)</td><td class="num">Θ(n)</td><td>linear scan — build a <code>set</code> once for O(1) checks</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The canonical problem: Two Sum (LeetCode 1)</h2>
+  <p><em>"Given an array of integers nums and an integer target, return indices of the two numbers that add up to target."</em> Brute force checks every pair — n(n−1)/2 of them, Θ(n²). The hash-map insight is a question, not a loop: for each element x, <em>what partner am I looking for?</em> The answer is <code>target − x</code> — and a hash map answers "have I seen it?" in O(1):</p>
+  <pre>def twoSum(nums: list[int], target: int) -> list[int]:
+    # seen[value] = index. One pass: for each x, ask the map
+    # "have you seen target - x?" before remembering x. LC 1.
+    seen: dict[int, int] = {}
+    for i, x in enumerate(nums):
+        need = target - x
+        if need in seen:                    # complement found
+            return [seen[need], i]
+        seen[x] = i                         # remember x for later elements
+    raise ValueError("no solution")</pre>
+  <p><strong>Complexity:</strong> n iterations × O(1) average map ops → <strong>O(n) time</strong>; the map holds at most n entries → <strong>O(n) space</strong>. On <code>[2,7,11,15]</code>, target 9: i=0, need 7 — not in <code>{}</code>, remember <code>{2:0}</code>; i=1, need 2 — <strong>in</strong> the map → return <code>[0,1]</code>.</p>
+
+  <h2>How to spot it: the tells</h2>
+  <ul>
+    <li><strong>"have I seen this before?" / "first duplicate"</strong> → <strong>set</strong>: membership in O(1).</li>
+    <li><strong>"for each element, find its partner/complement"</strong> — pair summing to target, anagram twin → <strong>dict</strong>, Two Sum's shape.</li>
+    <li><strong>"count / most frequent / group by"</strong> → <strong>dict as counter</strong> (L6 turns this into a whole lesson).</li>
+    <li><strong>membership tests inside a loop</strong> → build a <strong>set</strong> once: n × O(n) becomes n × O(1). This lesson's hidden-cost trap.</li>
+  </ul>
+
+  <h2>The pitfalls</h2>
+  <ol class="steps">
+    <li><strong>Unhashable keys</strong> — <code>d[[1,2]] = x</code> → <code>TypeError: unhashable type: 'list'</code>. Use <code>tuple</code> or <code>frozenset</code>; a mutable key could change its hash mid-life and get lost in the wrong slot.</li>
+    <li><strong>Mutating during iteration</strong> → <code>RuntimeError: dictionary changed size during iteration</code>. Iterate over <code>list(d)</code> if you must mutate.</li>
+    <li><strong><code>d[k]</code> vs <code>d.get(k)</code></strong> — brackets raise <code>KeyError</code> on a miss; <code>.get(k)</code> returns <code>None</code> or your default.</li>
+    <li><strong><code>in</code> on a list is a scan</strong> — O(n), not O(1). Put candidates in a <code>set</code> first.</li>
+    <li><strong>Sets are unordered; dicts are insertion-ordered</strong> (since 3.7). Never depend on set order — it's randomized per run.</li>
+    <li><strong>The hash isn't free</strong> — hashing a 10KB string key costs a 10KB scan.</li>
+  </ol>
+
+  <h2>Connects to</h2>
+  <p><strong>L6</strong> (Frequency &amp; grouping patterns — today's dict becomes <code>Counter</code> and group-by) · <strong>L23</strong> (LRU cache — dict + doubly-linked list composed into a design problem) · <strong>L28</strong> (Top-k — the map's counts feed the heap) · <strong>L16</strong> (prefix-sum + hash map solves subarray-sum queries in O(n)) · <strong>L42</strong> (bit manipulation — tiny sets as bitmasks). Full roadmap: <a href="../leetcode-curriculum.html">the LeetCode-round curriculum</a>.</p>
+
+  <div class="interview">
+    <span class="label">🎯 Your 30-second interview answer</span>
+    <p>"An array gives O(1) by integer index — pointer arithmetic, no scanning. A hash map generalizes it: slot equals hash of the key mod capacity, so lookup by <em>name</em> costs the same. The catch is collisions — the birthday bound says they arrive after about root-m keys, so the table chains or probes and keeps the load factor bounded by doubling on resize. Under uniform hashing the expected probe count is one plus alpha, a constant, so operations are O(1) average — the doubling argument is the same one that made appends amortized O(1) back in L1. The interview reflex: whenever the problem asks 'have I seen its partner?' — Two Sum is the canonical shape: one pass, look up the complement, O(n) time instead of O(n²). And the two Python traps: keys must be immutable, and <code>in</code> on a list is O(n) — build a set."</p>
+  </div>
+
+  <p class="full-link"><a href="../briefs/Hash Maps &amp; Sets - The O(1) Workhorse (2026-10-02 12.21.00).html">Read the full Letter brief →</a></p>
+  <p style="text-align:center">Study companion: <a href="https://deep1blue.github.io/study-guides/hash-maps-sets/">the deep-dive study guide</a> (diagrams, primary sources, self-tests)</p>
+  <p>— The Infra Notebook</p>
+</div>
+
+</body>
+</html>
