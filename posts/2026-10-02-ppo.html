@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PPO: The Clip That Tames the Optimizer — The Infra Notebook</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400;1,700&family=Caveat:wght@600;700&display=swap");
+    :root {
+      --paper:#f1e7da; --ink:#23221f; --ink-soft:#6f6555; --accent:#a13f04;
+      --accent-deep:#7a3303; --line:#e3d6c1; --measure:680px; --radius:16px;
+      --raised:0 2px 2px rgba(111,101,85,.1), 0 8px 24px rgba(111,101,85,.1);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink);
+           font-family:"Alegreya", Georgia, serif; font-size:1.1875rem; line-height:1.55; }
+    .wrap { max-width:var(--measure); margin:0 auto; padding:2.5rem 1rem 4rem; }
+    .back { margin-bottom:1.5rem; }
+    .back a { color:var(--accent-deep); text-decoration:none; border-bottom:1px solid var(--accent); }
+    .dateline { text-align:center; color:var(--ink-soft); font-size:1.05rem; margin-bottom:.25rem; }
+    h1 { text-align:center; font-family:"Caveat", cursive; font-weight:700; color:var(--accent);
+         font-size:clamp(2.6rem,6vw,3.75rem); line-height:1.15; margin:.25rem 0 .75rem; }
+    .subtitle { text-align:center; font-style:italic; color:var(--ink-soft); font-size:1.3rem;
+                margin:0 0 1.5rem; }
+    .chips { text-align:center; margin-bottom:2rem; }
+    .chip { display:inline-block; font-size:.95rem; padding:.15rem .7rem; border-radius:999px;
+            margin:0 .35rem .35rem 0; border:1px solid var(--line); }
+    .chip.branch { background:#f7e8d7; color:var(--accent-deep); }
+    .chip.type-lesson { background:#e9e4d3; color:#4a4636; }
+    .figure { position:relative; background:#fff; border-radius:30px; padding:.9rem;
+              box-shadow:var(--raised); max-width:760px; margin:0 auto 2.5rem; }
+    .figure img { display:block; width:100%; border-radius:20px; }
+    .figure .tape { position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(-3deg);
+                    width:120px; height:32px; background:rgba(214,165,109,.55);
+                    border-left:1px dashed rgba(122,51,3,.35); border-right:1px dashed rgba(122,51,3,.35); }
+    .figure figcaption { text-align:center; color:var(--ink-soft); font-style:italic;
+                         padding:.75rem .5rem .25rem; font-size:1.05rem; }
+    .callout { background:#fffdf9; border:1px solid var(--line); border-left:4px solid var(--accent);
+               border-radius:8px; padding:1rem 1.25rem; margin:1.75rem 0; }
+    .callout p { margin:.4rem 0; }
+    .callout strong.label { color:var(--accent-deep); }
+    h2 { font-size:1.6rem; color:var(--accent-deep); margin:2.25rem 0 .75rem; }
+    ol.steps { padding-left:1.4rem; }
+    ol.steps li { margin-bottom:1rem; }
+    code { background:#efe6d6; padding:.1rem .4rem; border-radius:6px; font-size:1.02rem; }
+    .math { background:#fffdf9; border:1px solid var(--line); border-radius:var(--radius);
+            padding:1.25rem 1.5rem; margin:1.5rem 0; text-align:center; font-size:1.35rem; }
+    .interview { background:#fffdf9; border:1px dashed var(--accent); border-radius:var(--radius);
+                 padding:1.25rem 1.5rem; margin:2rem 0; box-shadow:var(--raised); }
+    .interview .label { font-weight:700; color:var(--accent-deep); margin-bottom:.5rem; display:block; }
+    .full-link { margin:2.5rem 0 1rem; text-align:center; }
+    .full-link a { color:var(--accent-deep); border-bottom:2px solid var(--accent); text-decoration:none; }
+    .sig { text-align:center; font-family:"Caveat", cursive; font-size:2rem; color:var(--accent-deep);
+           margin-top:2.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="back"><a href="../index.html">← The Infra Notebook</a></p>
+    <p class="dateline">Friday, October 2, 2026</p>
+    <h1>PPO: The Clip That Tames the Optimizer</h1>
+    <p class="subtitle">Yesterday you opened the judge and measured how it gets hacked — gold peaks, then declines against KL distance. Today you meet the optimizer that climbs that curve, and the one trick that keeps it from sprinting off the peak.</p>
+    <div class="chips">
+      <span class="chip branch">SFT and RL</span>
+      <span class="chip type-lesson">Lesson</span>
+    </div>
+
+    <figure class="figure">
+      <span class="tape"></span>
+      <img src="../media/hero-ppo.webp" alt="Hand-drawn anime illustration of a robot engineer gently guiding a smaller robot up a steep hill toward a glowing trophy on a leash, with a visible springy trust-region bubble constraining how far each step can move and handwritten equations in the margins">
+      <figcaption>Lesson B5: meet the climber — one ratio, one clip, and the pessimistic min() that keeps every step on the leash</figcaption>
+    </figure>
+
+    <h2>Builds on</h2>
+    <p><strong>B4 — Reward Modeling: Reading the Judge's Mind.</strong> Recap: yesterday the judge became a function the optimizer can climb, and Gao's over-optimization curve showed what happens when optimization pressure runs unchecked — proxy climbs, gold peaks, then declines against d = √KL(π‖π<sub>ref</sub>). Today's optimizer, PPO, lives exactly on that x-axis: every design choice in PPO is about how far along d the policy may move per update. <strong>B3 — the RLHF pipeline:</strong> you saw PPO's objective written as one line in the three-stage pipeline; today that line becomes the whole lesson. Spaced retrieval, as promised: remember the masked-CE averaging subtlety from SFT — "watch token count, not example count"? It returns today, because PPO for LLMs is a <em>token-level</em> loss, and the same averaging decision quietly changes what the clip constrains.</p>
+
+    <h2>Intuition: why you can't just climb</h2>
+    <p>Vanilla policy gradient says: take actions that got reward, in proportion to how surprising they were — ∇J = E[r(θ) · Â · ∇log π], with r(θ) = π<sub>θ</sub>/π<sub>θ_old</sub> correcting for the fact that the data came from yesterday's policy. The problem is staleness: after one gradient step the policy has moved, but your sampled completions still came from the old one. One lucky batch — a fluky token with a huge advantage — and a single update can shove that token's probability from 1% to 40%. Now the policy lives where the reward model never trained. That is B4's off-distribution exploitation wearing a different name: the optimizer sprinting past the peak on Gao's curve in <em>one step</em>. TRPO's answer (Schulman et al., 2015) was a hard KL constraint on every update — principled, second-order, expensive. PPO's answer (Schulman et al., 2017) keeps the trust-region idea and enforces it with a clip. The intuition is a leash: let any token's probability move, but never more than (1±ε) times its old value per update. Clipping turns "climb the reward hill" into "climb, but only one leashed step at a time." A trust region you can implement in ten lines — which is exactly why it won.</p>
+
+    <h2>Mechanism: the clipped surrogate</h2>
+    <div class="math">L<sup>CLIP</sup>(θ) = E<sub>t</sub>[ min( r<sub>t</sub>(θ) Â<sub>t</sub>, clip(r<sub>t</sub>(θ), 1−ε, 1+ε) Â<sub>t</sub> ) ]</div>
+    <p>The ratio r<sub>t</sub>(θ) = π<sub>θ</sub>(a<sub>t</sub>|s<sub>t</sub>) / π<sub>θ_old</sub>(a<sub>t</sub>|s<sub>t</sub>) measures how far this token's probability has moved since the data was sampled; the clip chops that ratio to [1−ε, 1+ε] (ε = 0.2 is the industry default); the min() takes the <em>pessimistic</em> one. Read the two cases, because the asymmetry is the whole design. If Â<sub>t</sub> &gt; 0 — a good token, better than expected — the objective wants r<sub>t</sub> to grow, but the min() caps the upside at (1+ε)Â<sub>t</sub>. The optimizer cannot get rich on one token: the update that would push a token from 1% to 40% probability in a single step gets clipped, and the surplus gradient is simply dropped. If Â<sub>t</sub> &lt; 0 — a bad token, worse than expected — the same logic applies in mirror: push the probability below 1−ε and the objective goes flat at (1−ε)Â<sub>t</sub>, no extra credit for overshooting. But move the <em>wrong</em> way — raise a bad token's probability, or lower a good one's — and the min() picks the unclipped term, delivering the full penalty. The asymmetry is exact: the clip bounds how much you can <em>gain</em> in one update, never how much you can <em>lose</em>. Every step is capped on the upside and honest on the downside — which is precisely why the policy cannot sprint off Gao's peak in a single update.</p>
+
+    <h2>The loop: five stages per iteration</h2>
+    <ol class="steps">
+      <li><strong>Roll out:</strong> freeze the policy as π<sub>θ_old</sub> and generate completions — this is where the wall-clock goes, and why generation throughput (vLLM, async rollout workers; B8's whole subject) is the bottleneck of RLHF, not the gradient step.</li>
+      <li><strong>Score:</strong> the reward model scores each completion, and the per-token KL penalty against π<sub>ref</sub> is folded in: r<sub>t</sub> = r<sub>RM</sub> − β · log(π<sub>θ</sub>/π<sub>ref</sub>). That subtraction is B4's defense catalog running live — every token pays rent for drifting from the judge's competence zone.</li>
+      <li><strong>Advantage:</strong> compute Â<sub>t</sub> with GAE (below).</li>
+      <li><strong>Update:</strong> run K epochs of minibatch SGD — typically 4 — over the <em>same</em> rollout batch. This reuse is PPO's sample-efficiency trick, and the clip is what makes reuse survivable: without it, epoch 3 would be optimizing on data three gradient steps stale, which is exactly the staleness failure the algorithm exists to prevent.</li>
+      <li><strong>Discard:</strong> throw the batch away. PPO is strictly on-policy; yesterday's rollouts are today's poison.</li>
+    </ol>
+    <p>The Staff-level read: notice the memory bill — policy, reference, reward model, and value head all live in GPU memory at once (the memory-budget line in the F1 design doc), and notice that stages 1 and 4 want opposite things: generation wants throughput, the update wants fresh data.</p>
+
+    <h2>The math that matters</h2>
+    <p><strong>First, the advantage.</strong> Raw returns are far too noisy to learn from — one lucky completion swamps the signal — so PPO learns from <em>how much better than expected</em> each token was. The value head V<sub>φ</sub>(s<sub>t</sub>) — a second scalar head, usually initialized from the reward model — predicts expected return from each state, and the TD error δ<sub>t</sub> = r<sub>t</sub> + γV(s<sub>t+1</sub>) − V(s<sub>t</sub>) measures the surprise. GAE (Schulman et al., 2015) blends n-step surprises:</p>
+    <div class="math">Â<sub>t</sub> = Σ<sub>l≥0</sub> (γλ)<sup>l</sup> δ<sub>t+l</sub></div>
+    <p>λ = 1 is full Monte Carlo (unbiased, high variance); λ = 0 is one-step TD (biased, low variance); λ ≈ 0.95 is the standard compromise. The value loss, L<sup>VF</sup> = E[(V<sub>φ</sub>(s<sub>t</sub>) − V<sub>target</sub>)²] — often with its own clip on the value update — is not a side quest: a bad value estimate injects bias into every advantage, and the advantage is the entire learning signal.</p>
+    <p><strong>Second, the two KLs and why both exist.</strong> The clip constrains movement relative to π<sub>θ_old</sub> — this iteration's trust region, guarding the <em>step</em>; the per-token KL penalty against π<sub>ref</sub> constrains distance from the SFT anchor — B4's d-axis, guarding the <em>journey</em> inside the reward model's competence zone. PPO's paper actually shipped an adaptive-KL variant too; practice converged on clip <em>plus</em> KL penalty, because one mechanism was never enough.</p>
+    <p><strong>Third, the SFT retrieval, now with teeth.</strong> PPO's loss is token-level, averaged over the batch's tokens, and the SFT lesson returns verbatim — watch token count, not example count. A 4k-token completion contributes 4k clipped ratios to the average; advantage whitening (normalizing Â per batch) exists precisely so one prompt's reward scale can't dominate the update. Same averaging subtlety, harder context — spaced retrieval doing its job.</p>
+
+    <h2>What breaks in production</h2>
+    <p>The practices that make or break LLM PPO runs: <strong>advantage whitening</strong> — normalize Â per batch, or one prompt's reward scale dominates the update; <strong>KL controllers</strong> — adaptive β targeting a KL budget, because a fixed β is either a choke chain (KL collapses to zero, reward flat, the policy never leaves home) or a decoration (KL runs away, you're right of Gao's peak and the clip can't save you); <strong>clip discipline</strong> — ε = 0.2 standard, sometimes annealed late in training, and watch the fraction of clipped ratios as a health metric (near 100% clipped means the trust region binds everywhere — updates are fighting the leash); <strong>no entropy bonus</strong> — textbook PPO adds one for exploration, but in LLMs it fights the KL anchor and buys gibberish diversity nobody wants; <strong>value-head init from the RM</strong> — a randomly initialized V<sub>φ</sub> poisons every advantage for the first hundred steps, so start it from the reward model that already scores states.</p>
+    <div class="callout">
+      <p><strong class="label">Debug checklist.</strong> Reward climbing while human eval degrades → you're right of the peak; raise β or early-stop on gold (B4's curve, now operational). PPO stable for 200 steps then diverging → too many epochs on stale rollouts, ratios drifting past the clip; regenerate more often. Value loss exploding → check the V init and reward scale before touching the policy LR. The Staff one-liner: PPO's hyperparameters are a trust-region budget, not a tuning lottery — every knob answers "how far may the policy move, and on whose authority?"</p>
+    </div>
+
+    <h2>Connects to</h2>
+    <p><strong>B6 — DPO:</strong> the entire clip/value/GAE apparatus is what DPO deletes — its derivation starts from the closed-form optimal policy under the KL constraint and turns RL into classification; you can't feel why DPO spread without today's pain. <strong>B7 — GRPO/RLOO:</strong> GRPO drops the value head entirely and uses group-normalized rewards as the baseline — today's GAE section is the thing GRPO replaces. <strong>B8 — RL infra:</strong> the rollout loop above is why generation throughput (vLLM, async rollout workers) is the system bottleneck; B8 is this lesson at data-center scale. <strong>B9 — RLVR:</strong> swap the learned judge for a deterministic verifier and the reward becomes exact — the KL machinery stays, the hacking math changes. <strong>F1 — design training on 10k GPUs:</strong> four model copies (policy, reference, reward, value) × optimizer states × rollout buffers is the memory-budget line in the Staff design doc. <strong>A6/A7:</strong> PPO's K-epoch minibatch reuse is exactly where large-batch dynamics and mixed-precision numerics bite in RL.</p>
+
+    <h2>30-second interview answer</h2>
+    <div class="interview">
+      <span class="label">Say it out loud.</span>
+      <p>"Why does PPO clip, and why does it work for LLMs?" → "Vanilla policy gradients are on-policy: after one update your data is stale, and one lucky batch can shove a token's probability 50× — straight into regions the reward model never learned, which is reward hacking by another name. PPO's clipped surrogate, L = E[min(rÂ, clip(r, 1±ε)Â)], bounds how much you can <em>gain</em> in one update while leaving losses honest: push a good token's probability too far and the objective plateaus — no extra credit — but move the wrong way and the full penalty applies. That's a trust region in ten lines. On top of that, LLM PPO folds a per-token KL penalty against π<sub>ref</sub> into the reward — the clip guards each step, the KL penalty guards the journey along Gao's d-axis. GAE with λ ≈ 0.95 trades bias for variance in the advantage, and the value head — initialized from the reward model — is half the algorithm, not a side quest." Say it once from memory before the workout and node B5 is yours.</p>
+    </div>
+
+    <p class="full-link">
+      <a href="../../briefs/PPO - The Clip That Tames the Optimizer (2026-10-02 06.00.00).html">PPO: The Clip That Tames the Optimizer — Letter brief</a>
+      ·
+      <a href="https://deep1blue.github.io/study-guides/ppo/">Deep-dive study guide</a>
+      ·
+      <a href="../curriculum.html">Full curriculum</a>
+    </p>
+
+    <p class="sig">— The Infra Notebook</p>
+  </div>
+</body>
+</html>
